@@ -31,7 +31,7 @@ const FISH_SPECIES_LIST = [
   'Kolyoz'
 ];
 
-export default function AddReportModal({ isOpen, onClose }: AddReportModalProps) {
+export default function AddReportModal({ isOpen, onClose, onAddReport }: AddReportModalProps) {
   const [title, setTitle] = useState('');
   const [locationName, setLocationName] = useState('');
   const [content, setContent] = useState('');
