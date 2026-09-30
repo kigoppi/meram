@@ -7,7 +7,7 @@ interface AddMushroomReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddReport: (report: any) => void;
-  onStartMapSelection?: () => void;
+  onStartMapSelection: () => void;
   selectedCoords?: { lat: number; lng: number } | null;
 }
 
@@ -135,7 +135,7 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, o
             />
           </div>
 
-          {/* Konum Belirleme Yöntemleri (Responsive Alt Alta / Yan Yana) */}
+          {/* Konum Belirleme Yöntemleri (Garanti Görünür) */}
           <div className={`p-3.5 rounded-xl border space-y-3 ${finalActiveCoords ? 'bg-[#16110e] border-emerald-600/50' : 'bg-amber-950/20 border-amber-600/40'}`}>
             <span className="text-[#d4c5b9] font-medium block">
               Konum Belirleme Yöntemi <span className="text-amber-500">*Zorunlu</span>
@@ -152,21 +152,19 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, o
                 <span>Konumdan Al (GPS)</span>
               </button>
 
-              {onStartMapSelection && (
-                <button
-                  type="button"
-                  onClick={onStartMapSelection}
-                  className="py-2.5 px-3 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md text-xs w-full"
-                >
-                  <Compass className="w-4 h-4" />
-                  <span>Haritadan Seç</span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={onStartMapSelection}
+                className="py-2.5 px-3 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md text-xs w-full"
+              >
+                <Compass className="w-4 h-4" />
+                <span>Haritadan Seç</span>
+              </button>
             </div>
 
             {finalActiveCoords ? (
               <p className="text-[10px] text-emerald-400 font-mono text-center">
-                ✓ Konum Alındı: {finalActiveCoords.lat.toFixed(4)}, {finalActiveCoords.lng.toFixed(4)}
+                ✓ Konum Seçildi: {finalActiveCoords.lat.toFixed(4)}, {finalActiveCoords.lng.toFixed(4)}
               </p>
             ) : (
               <p className="text-[10px] text-amber-400 flex items-center justify-center gap-1 text-center">

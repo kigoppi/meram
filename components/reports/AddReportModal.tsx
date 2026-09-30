@@ -8,7 +8,7 @@ interface AddReportModalProps {
   onClose: () => void;
   onAddReport: (report: any) => void;
   moduleType: 'fishing' | 'mushroom';
-  onStartMapSelection?: () => void;
+  onStartMapSelection: () => void;
   selectedCoords?: { lat: number; lng: number } | null;
 }
 
@@ -143,7 +143,7 @@ export default function AddReportModal({ isOpen, onClose, onAddReport, onStartMa
             />
           </div>
 
-          {/* Konum Belirleme Yöntemleri (Responsive Alt Alta / Yan Yana) */}
+          {/* Konum Belirleme Yöntemleri (Garanti Görünür) */}
           <div className={`p-3.5 rounded-xl border space-y-3 ${finalActiveCoords ? 'bg-slate-950 border-emerald-600/50' : 'bg-cyan-950/20 border-cyan-600/40'}`}>
             <span className="text-slate-300 font-medium block">
               Konum Belirleme Yöntemi <span className="text-cyan-400">*Zorunlu</span>
@@ -160,16 +160,14 @@ export default function AddReportModal({ isOpen, onClose, onAddReport, onStartMa
                 <span>Konumdan Al (GPS)</span>
               </button>
 
-              {onStartMapSelection && (
-                <button
-                  type="button"
-                  onClick={onStartMapSelection}
-                  className="py-2.5 px-3 rounded-xl bg-blue-700 hover:bg-blue-600 text-white font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md text-xs w-full"
-                >
-                  <Compass className="w-4 h-4" />
-                  <span>Haritadan Seç</span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={onStartMapSelection}
+                className="py-2.5 px-3 rounded-xl bg-blue-700 hover:bg-blue-600 text-white font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md text-xs w-full"
+              >
+                <Compass className="w-4 h-4" />
+                <span>Haritadan Seç</span>
+              </button>
             </div>
 
             {finalActiveCoords ? (
