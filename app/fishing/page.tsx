@@ -1,11 +1,11 @@
 'use client';
-import { SpeedInsights } from "@vercel/speed-insights/next"
+
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { 
   Fish, MapPin, ThumbsUp, ThumbsDown, Plus, 
-  Compass, ArrowLeft, ShieldCheck, AlertCircle, Navigation, X, Clock, Sparkles, Waves, Info 
+  Compass, ArrowLeft, Navigation, X, Clock, Sparkles, Waves, Info 
 } from 'lucide-react';
 import AddReportModal from '@/components/reports/AddReportModal';
 
@@ -126,9 +126,9 @@ export default function FishingModulePage() {
         const newDownvotes = type === 'down' ? rep.downvotes + 1 : rep.downvotes;
         const totalVotes = newUpvotes + newDownvotes;
         const calculatedTrust = totalVotes > 0 ? Math.round((newUpvotes / totalVotes) * 100) : 50;
-        const newStatus = calculatedTrust >= 70 ? 'verified' : 'pending';
+        const newStatus: 'verified' | 'pending' = calculatedTrust >= 70 ? 'verified' : 'pending';
 
-        const updatedRep = {
+        const updatedRep: Report = {
           ...rep,
           upvotes: newUpvotes,
           downvotes: newDownvotes,
@@ -149,9 +149,10 @@ export default function FishingModulePage() {
   };
 
   const handleAddNewReport = (newReport: Report) => {
-    const reportWithAuthor = {
+    const reportWithAuthor: Report = {
       ...newReport,
-      author: 'Gezgin Avcı'
+      author: 'Gezgin Avcı',
+      status: newReport.status || 'pending'
     };
     const updated = [reportWithAuthor, ...reports];
     saveAndSetReports(updated);
@@ -172,7 +173,6 @@ export default function FishingModulePage() {
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#030712] text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-black">
       
-      {/* Üst Navigasyon Barı */}
       <header className="h-16 border-b border-cyan-900/30 bg-[#030712]/90 backdrop-blur-xl px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl shadow-cyan-950/30">
         <div className="flex items-center gap-4">
           <button 
@@ -230,10 +230,8 @@ export default function FishingModulePage() {
         </div>
       </header>
 
-      {/* 3 Sütunlu Yerleşim */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 h-[calc(100vh-4rem)] overflow-hidden">
         
-        {/* SOL SÜTUN */}
         <div className="lg:col-span-3 bg-[#030712] border-r border-cyan-900/30 flex flex-col h-full overflow-hidden">
           <div className="p-3.5 border-b border-cyan-900/20 bg-[#030712]/90 shrink-0 flex items-center justify-between">
             <h2 className="text-xs font-black tracking-wider uppercase text-cyan-400 flex items-center gap-1.5">
@@ -284,7 +282,6 @@ export default function FishingModulePage() {
           </div>
         </div>
 
-        {/* ORTA SÜTUN: Harita */}
         <div className="lg:col-span-6 relative bg-[#0b0f19] border-r border-cyan-900/30 flex flex-col h-full overflow-hidden">
           {isSelectingLocation && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[400] bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-4 py-2 rounded-xl shadow-2xl shadow-cyan-500/40 flex items-center gap-2.5 text-xs font-bold tracking-wide border border-cyan-300/40 animate-pulse">
@@ -303,13 +300,13 @@ export default function FishingModulePage() {
             onMapClick={handleMapClick} 
             reports={reports} 
             showWeatherLayer={showWeatherLayer}
+            onWeatherLayerToggle={setShowWeatherLayer}
             isSelectingLocation={isSelectingLocation}
             tempSelectedCoords={selectedCoords}
             isModalOpen={isModalOpen || !!activeDetailReport}
           />
         </div>
 
-        {/* SAĞ SÜTUN: Arşiv */}
         <div className="lg:col-span-3 bg-[#030712] flex flex-col h-full overflow-hidden">
           <div className="p-3.5 border-b border-cyan-900/20 bg-[#030712]/90 shrink-0 flex items-center justify-between">
             <h2 className="text-xs font-black tracking-wider uppercase text-cyan-400 flex items-center gap-1.5">
@@ -362,7 +359,6 @@ export default function FishingModulePage() {
 
       </div>
 
-      {/* RAPOR DETAY MODALI */}
       {activeDetailReport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-cyan-500/40 w-full max-w-lg rounded-2xl p-6 relative shadow-2xl text-white space-y-4 my-auto max-h-[90vh] overflow-y-auto">
@@ -448,7 +444,6 @@ export default function FishingModulePage() {
         </div>
       )}
 
-      {/* Rapor Ekleme Modalı */}
       <AddReportModal 
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setSelectedCoords(null); }}
@@ -457,7 +452,6 @@ export default function FishingModulePage() {
         selectedCoords={selectedCoords}
       />
 
-      {/* Bilgilendirme Modalı */}
       {isInfoModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-cyan-500/30 w-full max-w-md rounded-2xl p-6 relative shadow-2xl text-white space-y-4">
