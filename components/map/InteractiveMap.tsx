@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Loader2 } from 'lucide-react';
@@ -17,13 +17,13 @@ const getReportBadgeStyle = (createdAt?: number) => {
   const diffMinutes = (now - reportTime) / (1000 * 60);
 
   if (diffMinutes <= 1) {
-    return { borderColor: '#ef4444', glowColor: 'rgba(239, 68, 68, 0.8)', animationClass: 'animate-pulse' };
+    return { borderColor: '#ef4444' };
   } else if (diffMinutes <= 30) {
-    return { borderColor: '#f59e0b', glowColor: 'rgba(245, 158, 11, 0.8)', animationClass: 'animate-pulse' };
+    return { borderColor: '#f59e0b' };
   } else if (diffMinutes <= 60) {
-    return { borderColor: '#10b981', glowColor: 'rgba(16, 185, 129, 0.8)', animationClass: 'animate-pulse' };
+    return { borderColor: '#10b981' };
   } else {
-    return { borderColor: '#38bdf8', glowColor: 'transparent', animationClass: '' };
+    return { borderColor: '#38bdf8' };
   }
 };
 
@@ -57,13 +57,6 @@ const createCompactReportBadge = (trustScore: number, createdAt?: number) => {
   });
 };
 
-const targetPinIcon = L.icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
-
 interface Report {
   id: string;
   title: string;
@@ -77,18 +70,13 @@ interface Report {
   subData?: {
     fishType?: string;
     lure?: string;
-    waterCondition?: string;
   };
 }
 
 interface InteractiveMapProps {
-  onMapClick?: (coords: { lat: number; lng: number }) => void;
   reports?: Report[];
   showWeatherLayer?: boolean;
   onWeatherLayerToggle?: (show: boolean) => void;
-  isSelectingLocation: boolean;
-  tempSelectedCoords?: { lat: number; lng: number } | null;
-  isModalOpen?: boolean;
 }
 
 interface WeatherData {
@@ -140,18 +128,8 @@ const WEATHER_POINTS = [
   { id: 'hat-iskenderun', name: 'Hatay / İskenderun', lat: 36.5872, lng: 36.1736, hasSea: true }
 ];
 
-function MapEventsHandler({ onMapClick, isSelectingLocation }: { onMapClick?: (coords: { lat: number; lng: number }) => void, isSelectingLocation: boolean }) {
-  useMapEvents({
-    click(e: any) {
-      if (isSelectingLocation && onMapClick) {
-        onMapClick({ lat: e.latlng.lat, lng: e.latlng.lng });
-      }
-    },
-  });
-  return null;
-}
 
-export default function InteractiveMap({ onMapClick, reports = [], showWeatherLayer = false, onWeatherLayerToggle, isSelectingLocation, tempSelectedCoords, isModalOpen }: InteractiveMapProps) {
+export default function InteractiveMap({ reports = [], showWeatherLayer = false, onWeatherLayerToggle }: InteractiveMapProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [weatherMap, setWeatherMap] = useState<Record<string, WeatherData>>({});
   const [isLoadingWeather, setIsLoadingWeather] = useState(false);
@@ -212,15 +190,6 @@ export default function InteractiveMap({ onMapClick, reports = [], showWeatherLa
     }
 
     fetchLiveData();
-
-    const weatherInterval = setInterval(() => {
-      fetchLiveData();
-    }, 15 * 60 * 1000);
-
-    return () => {
-      isCancelled = true;
-      clearInterval(weatherInterval);
-    };
   }, [showWeatherLayer]);
 
   if (!isMounted) {
@@ -247,18 +216,18 @@ export default function InteractiveMap({ onMapClick, reports = [], showWeatherLa
         </div>
       )}
 
-      <div className={`absolute top-4 left-4 transition-all duration-200 ${isModalOpen ? 'z-0 pointer-events-none opacity-20' : 'z-[1000]'}`}>
-        <div className="bg-[#030712]/95 border border-cyan-500/40 p-3 rounded-xl backdrop-blur-xl shadow-2xl shadow-cyan-950/60 text-xs space-y-1.5 min-w-[170px]">
-          <div className="flex items-center gap-2 font-bold text-cyan-400 border-b border-slate-800/80 pb-1.5 tracking-wider uppercase text-[10px]">
+      <div className="absolute top-4 left-4 z-[1000]">
+        <div className="bg-[#030712]/95 border border-cyan-500/40 p-3 rounded-xl backdrop-blur-xl shadow-2xl text-xs space-y-1.5 min-w-[170px]">
+          <div className="flex items-center gap-2 font-bold text-cyan-400 border-b border-slate-800 pb-1.5 uppercase text-[10px]">
             <span>Harita Katmanı</span>
           </div>
           
-          <label className="flex items-center gap-2 cursor-pointer select-none text-slate-300 hover:text-white font-medium transition-colors py-0.5">
+          <label className="flex items-center gap-2 cursor-pointer select-none text-slate-300 hover:text-white font-medium py-0.5">
             <input 
               type="checkbox" 
               checked={showWeatherLayer} 
               onChange={(e) => onWeatherLayerToggle && onWeatherLayerToggle(e.target.checked)}
-              className="rounded border-slate-700 bg-slate-950 text-cyan-500 focus:ring-0 w-3.5 h-3.5 cursor-pointer shadow-inner"
+              className="rounded border-slate-700 bg-slate-950 text-cyan-500 w-3.5 h-3.5 cursor-pointer"
             />
             <span className="flex items-center gap-1.5 text-xs">
               <span>🌤️</span> Canlı Hava & Deniz
@@ -278,8 +247,6 @@ export default function InteractiveMap({ onMapClick, reports = [], showWeatherLa
         zoomControl={false}
         style={{ width: '100%', height: '100%', background: '#0b0f19' }}
       >
-        <MapEventsHandler onMapClick={onMapClick} isSelectingLocation={isSelectingLocation} />
-
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -287,30 +254,9 @@ export default function InteractiveMap({ onMapClick, reports = [], showWeatherLa
 
         {showWeatherLayer && WEATHER_POINTS.map((pt) => {
           const liveData = weatherMap[pt.id] || { temp: '...', seaTemp: '...', wind: '...' };
-
-          const badgeHtml = `
-            <div style="
-              background: rgba(15, 23, 42, 0.95); 
-              color: #38bdf8; 
-              border: 1px solid rgba(56, 189, 248, 0.4); 
-              padding: 3px 8px; 
-              border-radius: 9999px; 
-              font-size: 11px; 
-              font-weight: 600; 
-              white-space: nowrap; 
-              box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-              display: flex;
-              align-items: center;
-              gap: 4px;
-              cursor: pointer;
-            ">
-              <span>🌤️ ${liveData.temp}</span>
-            </div>
-          `;
-
           const weatherBadgeIcon = L.divIcon({
             className: 'weather-only-badge',
-            html: badgeHtml,
+            html: `<div style="background: rgba(15, 23, 42, 0.95); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 3px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600;">🌤️ ${liveData.temp}</div>`,
             iconSize: [65, 24],
             iconAnchor: [32, 12]
           });
@@ -319,38 +265,17 @@ export default function InteractiveMap({ onMapClick, reports = [], showWeatherLa
             <Marker key={pt.id} position={[pt.lat, pt.lng]} icon={weatherBadgeIcon}>
               <Popup>
                 <div className="p-2 text-slate-900 space-y-1.5 min-w-[160px]">
-                  <h4 className="font-bold text-sm border-b pb-1 text-slate-900">📍 {pt.name}</h4>
+                  <h4 className="font-bold text-sm border-b pb-1">📍 {pt.name}</h4>
                   <div className="text-xs space-y-1 pt-1 font-medium">
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-600">🌤 Hava Sıcaklığı:</span>
-                      <span className="font-bold text-slate-900">{liveData.temp}</span>
-                    </div>
-                    {pt.hasSea && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-600">🌊 Deniz Suyu:</span>
-                        <span className="font-bold text-blue-600">{liveData.seaTemp}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between items-center pt-0.5 border-t border-slate-100">
-                      <span className="text-slate-600">💨 Rüzgar:</span>
-                      <span className="font-semibold text-slate-700">{liveData.wind}</span>
-                    </div>
+                    <div className="flex justify-between items-center"><span className="text-slate-600">Hava:</span><span className="font-bold">{liveData.temp}</span></div>
+                    {pt.hasSea && <div className="flex justify-between items-center"><span className="text-slate-600">Deniz:</span><span className="font-bold text-blue-600">{liveData.seaTemp}</span></div>}
+                    <div className="flex justify-between items-center pt-0.5 border-t"><span className="text-slate-600">Rüzgar:</span><span className="font-semibold">{liveData.wind}</span></div>
                   </div>
                 </div>
               </Popup>
             </Marker>
           );
         })}
-
-        {tempSelectedCoords && (
-          <Marker position={[tempSelectedCoords.lat, tempSelectedCoords.lng]} icon={targetPinIcon}>
-            <Popup>
-              <div className="p-1 text-xs font-bold text-rose-600">
-                Seçilen Rapor Konumu 🎯
-              </div>
-            </Popup>
-          </Marker>
-        )}
 
         {reports.map((report) => {
           if (!report.coordinates) return null;
@@ -361,28 +286,13 @@ export default function InteractiveMap({ onMapClick, reports = [], showWeatherLa
             <Marker key={report.id} position={[report.coordinates.lat, report.coordinates.lng]} icon={compactIcon}>
               <Popup>
                 <div className="p-3 text-slate-900 space-y-2 min-w-[200px]">
-                  <div className="text-[11px] font-semibold text-blue-600 flex items-center gap-1">
-                    📍 {report.locationName}
-                  </div>
-                  <h4 className="font-bold text-sm text-slate-900 leading-snug">
-                    {report.title}
-                  </h4>
+                  <div className="text-[11px] font-semibold text-blue-600 flex items-center gap-1">📍 {report.locationName}</div>
+                  <h4 className="font-bold text-sm text-slate-900 leading-snug">{report.title}</h4>
                   <div className="bg-slate-100 border border-slate-200 rounded-xl p-2 space-y-1 text-xs font-medium">
-                    {report.subData?.fishType && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-500">🐟 Hedef Balık:</span>
-                        <span className="font-bold text-blue-700">{report.subData.fishType}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between pt-1 border-t border-slate-200">
-                      <span className="text-slate-500">⏰ Bildirim Saati:</span>
-                      <span className="font-bold text-slate-800">{displayTime}</span>
-                    </div>
+                    {report.subData?.fishType && <div className="flex items-center justify-between"><span className="text-slate-500">Hedef Balık:</span><span className="font-bold text-blue-700">{report.subData.fishType}</span></div>}
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-200"><span className="text-slate-500">Bildirim:</span><span className="font-bold text-slate-800">{displayTime}</span></div>
                   </div>
-                  <div className="flex justify-between items-center pt-1 text-[11px]">
-                    <span className="text-slate-500">Güvenilirlik:</span>
-                    <span className="font-bold text-emerald-600">%{report.trustScore}</span>
-                  </div>
+                  <div className="flex justify-between items-center pt-1 text-[11px]"><span className="text-slate-500">Güvenilirlik:</span><span className="font-bold text-emerald-600">%{report.trustScore}</span></div>
                 </div>
               </Popup>
             </Marker>
