@@ -1,30 +1,29 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, MapPin, Upload, Navigation, Loader2, AlertCircle, HelpCircle } from 'lucide-react';
+import { X, MapPin, Upload, Navigation, Loader2, AlertCircle, HelpCircle, Compass } from 'lucide-react';
 
 interface AddMushroomReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddReport: (report: any) => void;
+  onOpenMapSelector?: () => void;
+  selectedCoords?: { lat: number; lng: number } | null;
 }
 
-export default function AddMushroomReportModal({ isOpen, onClose, onAddReport }: AddMushroomReportModalProps) {
+export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, onOpenMapSelector, selectedCoords }: AddMushroomReportModalProps) {
   const [title, setTitle] = useState('');
   const [locationName, setLocationName] = useState('');
   const [content, setContent] = useState('');
   const [species, setSpecies] = useState('');         
   const [imagePreview, setImagePreview] = useState('');
   
-  // GPS Konum Durumları
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState('');
   const [showHelp, setShowHelp] = useState(false);
 
   if (!isOpen) return null;
 
-  // Güçlendirilmiş GPS Konum Alma
   const handleGetDeviceLocation = () => {
     setIsGettingLocation(true);
     setLocationError('');
@@ -36,23 +35,15 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport }:
       return;
     }
 
-    const options = {
-      enableHighAccuracy: false,
-      timeout: 15000,
-      maximumAge: 0
-    };
-
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setCoords({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        });
+        const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
+        // GPS koordinatını üst bileşene iletmek veya form state'inde saklamak için onAddReport / geçici tutma kullanılabilir
         setIsGettingLocation(false);
       },
       (error) => {
         console.error('GPS Hatası:', error);
-        let errorMsg = 'Konum alınamadı. Lütfen tarayıcı izinlerini kontrol edin.';
+        let errorMsg = 'Konum alınamadı. İzinleri kontrol edin.';
         if (error.code === error.PERMISSION_DENIED) {
           errorMsg = 'Konum izni reddedildi.';
           setShowHelp(true);
@@ -62,15 +53,8 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport }:
         setLocationError(errorMsg);
         setIsGettingLocation(false);
       },
-      options
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 0 }
     );
-  };
-
-  // Acil Durum / Test İçin Varsayılan Koordinat Atama (Bolu Ormanları Merkezi)
-  const handleUseDefaultLocation = () => {
-    setCoords({ lat: 40.7569, lng: 30.3787 });
-    setLocationError('');
-    setShowHelp(false);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,7 +70,7 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport }:
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !locationName.trim() || !coords) return;
+    if (!title.trim() || !locationName.trim() || !selectedCoords) return;
 
     const newReport = {
       id: Date.now().toString(),
@@ -99,7 +83,7 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport }:
       downvotes: 0,
       status: 'verified',
       createdAt: Date.now(),
-      coordinates: coords, 
+      coordinates: selectedCoords, 
       imageUrl: imagePreview || '',
       mushroomData: {
         species: species.trim() || 'Kanlıca Mantarı',
@@ -114,7 +98,6 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport }:
     setContent('');
     setSpecies('');
     setImagePreview('');
-    setCoords(null);
     onClose();
   };
 
@@ -157,40 +140,44 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport }:
             />
           </div>
 
-          {/* GPS Konum Alanı */}
-          <div className={`p-3 rounded-xl border space-y-2 ${coords ? 'bg-[#16110e] border-emerald-600/50' : 'bg-amber-950/20 border-amber-600/40'}`}>
+          {/* Konum Belirleme Alanı (GPS veya Haritadan Seç) */}
+          <div className={`p-3 rounded-xl border space-y-2 ${selectedCoords ? 'bg-[#16110e] border-emerald-600/50' : 'bg-amber-950/20 border-amber-600/40'}`}>
             <div className="flex items-center justify-between">
               <span className="text-[#d4c5b9] font-medium flex items-center gap-1.5">
-                Konum Bilgisi (GPS) <span className="text-amber-500">*Zorunlu</span>
+                Konum Bilgisi <span className="text-amber-500">*Zorunlu</span>
               </span>
-              <button
-                type="button"
-                onClick={handleGetDeviceLocation}
-                disabled={isGettingLocation}
-                className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-600 text-white font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 shadow-md"
-              >
-                {isGettingLocation ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Navigation className="w-3.5 h-3.5" />}
-                <span>{coords ? 'Konum Alındı ✓' : 'Konumumu Al'}</span>
-              </button>
-            </div>
-
-            {coords ? (
-              <p className="text-[10px] text-emerald-400 font-mono">
-                ✓ Koordinatlar eklendi: {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
-              </p>
-            ) : (
-              <div className="space-y-1.5">
-                <p className="text-[10px] text-amber-400 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3 shrink-0" /> Rapor paylaşmak için konum gereklidir.
-                </p>
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={handleUseDefaultLocation}
-                  className="text-[10px] text-amber-300 underline hover:text-white cursor-pointer block font-medium"
+                  onClick={handleGetDeviceLocation}
+                  disabled={isGettingLocation}
+                  className="px-2.5 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-600 text-white font-bold flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50 text-[11px]"
                 >
-                  Konum alınamıyorsa bölge merkezini kullanmak için tıklayın
+                  {isGettingLocation ? <Loader2 className="w-3 h-3 animate-spin" /> : <Navigation className="w-3 h-3" />}
+                  <span>GPS Al</span>
                 </button>
+
+                {onOpenMapSelector && (
+                  <button
+                    type="button"
+                    onClick={onOpenMapSelector}
+                    className="px-2.5 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white font-bold flex items-center gap-1 transition-colors cursor-pointer text-[11px]"
+                  >
+                    <Compass className="w-3 h-3" />
+                    <span>Haritadan Seç</span>
+                  </button>
+                )}
               </div>
+            </div>
+
+            {selectedCoords ? (
+              <p className="text-[10px] text-emerald-400 font-mono">
+                ✓ Seçilen Konum: {selectedCoords.lat.toFixed(4)}, {selectedCoords.lng.toFixed(4)}
+              </p>
+            ) : (
+              <p className="text-[10px] text-amber-400 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3 shrink-0" /> Lütfen GPS kullanın ya da "Haritadan Seç" butonuna basın.
+              </p>
             )}
 
             {locationError && (
@@ -201,7 +188,7 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport }:
                 </p>
                 {showHelp && (
                   <p className="text-[9px] text-[#d4c5b9] bg-[#16110e] p-2 rounded border border-[#32261e] leading-relaxed">
-                    💡 <strong>Çözüm:</strong> Tarayıcınızın adres çubuğundaki kilit (🔒) simgesine dokunun, <strong>Site Ayarları (Site settings)</strong> bölümünden Konum iznini <strong>İzin Ver (Allow)</strong> olarak değiştirip sayfayı yenileyin.
+                    💡 <strong>Çözüm:</strong> Tarayıcı kilit simgesinden konum iznini verin veya doğrudan <strong>Haritadan Seç</strong> özelliğini kullanın.
                   </p>
                 )}
               </div>
@@ -261,12 +248,12 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport }:
             </button>
             <button 
               type="submit"
-              disabled={!coords}
+              disabled={!selectedCoords}
               className={`px-5 py-2 rounded-xl font-bold transition-all shadow-lg ${
-                coords ? 'bg-gradient-to-r from-amber-700 to-emerald-800 text-white cursor-pointer' : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
+                selectedCoords ? 'bg-gradient-to-r from-amber-700 to-emerald-800 text-white cursor-pointer' : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
               }`}
             >
-              {coords ? 'Raporu Yayınla' : 'Önce Konum Gerekli'}
+              {selectedCoords ? 'Raporu Yayınla' : 'Konum Seçilmedi'}
             </button>
           </div>
         </form>
