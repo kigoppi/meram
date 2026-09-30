@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Webkit (Chrome, Edge, Safari) için */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0f19; /* Arka plan (slate-950 tonu) */
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b; /* Kaydırma çubuğu rengi (slate-800) */
+  border-radius: 8px;
+  border: 1px solid rgba(56, 189, 248, 0.1); /* Hafif cyan ışıltı sınırı */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #0284c7; /* Üzerine gelince mavi/cyan vurgu rengi (sky-600) */
+  border-color: rgba(56, 189, 248, 0.4);
+}
