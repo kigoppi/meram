@@ -16,22 +16,37 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport }:
   const [species, setSpecies] = useState('');         
   const [imagePreview, setImagePreview] = useState('');
   
-  // GPS Konum Durumları (Zorunlu)
+  // GPS Konum Durumları
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState('');
 
   if (!isOpen) return null;
 
+  // Mobil Uyumlu Güçlendirilmiş GPS Konum Alma Fonksiyonu
   const handleGetDeviceLocation = () => {
     setIsGettingLocation(true);
     setLocationError('');
+
+    // HTTPS Kontrolü (Canlıda HTTP ise mobil tarayıcılar konum vermez)
+    if (typeof window !== 'undefined' && window.location.protocol === 'http:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      setLocationError('Güvenlik Uyarısı: Mobil cihazlarda GPS için site HTTPS (güvenli bağlantı) üzerinden çalışmalıdır.');
+      setIsGettingLocation(false);
+      return;
+    }
 
     if (!navigator.geolocation) {
       setLocationError('Tarayıcınız konum servislerini desteklemiyor.');
       setIsGettingLocation(false);
       return;
     }
+
+    // Mobil cihazlar için optimize edilmiş ayarlar (timeout kaldırıldı, yüksek hassasiyet opsiyonel yapıldı)
+    const options = {
+      enableHighAccuracy: false, // Mobilde GPS kilitlenmesini hızlandırmak için önce şebeke/wifi tabanlı konuma izin verilir
+      timeout: 25000,            // Mobil GPS için süre uzatıldı
+      maximumAge: 60000          // Son 1 dakika içinde alınmış önbellek konumu kabul edilebilir
+    };
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -42,11 +57,17 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport }:
         setIsGettingLocation(false);
       },
       (error) => {
-        console.error(error);
-        setLocationError('Konum alınamadı. Lütfen tarayıcı izinlerini kontrol edin.');
+        console.error('GPS Hatası:', error);
+        let errorMsg = 'Konum alınamadı. Lütfen cihaz ayarlarından tarayıcıya konum izni verin.';
+        if (error.code === error.PERMISSION_DENIED) {
+          errorMsg = 'Konum izni reddedildi. Tarayıcı adres çubuğundan izinleri kontrol edin.';
+        } else if (error.code === error.TIMEOUT) {
+          errorMsg = 'Konum alma zaman aşımına uğradı. Lütfen açık alanda tekrar deneyin.';
+        }
+        setLocationError(errorMsg);
         setIsGettingLocation(false);
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      options
     );
   };
 
@@ -156,11 +177,11 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport }:
               </p>
             ) : (
               <p className="text-[10px] text-amber-400 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3 shrink-0" /> Rapor paylaşmak için cihaz konumunuzu almalısınız.
+                <AlertCircle className="w-3 h-3 shrink-0" /> Rapor paylaşmak için "Konumumu Al" butonuna basın.
               </p>
             )}
             {locationError && (
-              <p className="text-[10px] text-rose-400">{locationError}</p>
+              <p className="text-[10px] text-rose-400 font-medium bg-rose-950/40 p-2 rounded border border-rose-900/50">{locationError}</p>
             )}
           </div>
 

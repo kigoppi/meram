@@ -31,7 +31,7 @@ const FISH_SPECIES_LIST = [
   'Kolyoz'
 ];
 
-export default function AddReportModal({ isOpen, onClose, onAddReport }: AddReportModalProps) {
+export default function AddReportModal({ isOpen, onClose }: AddReportModalProps) {
   const [title, setTitle] = useState('');
   const [locationName, setLocationName] = useState('');
   const [content, setContent] = useState('');
@@ -46,15 +46,28 @@ export default function AddReportModal({ isOpen, onClose, onAddReport }: AddRepo
 
   if (!isOpen) return null;
 
+  // Mobil Uyumlu Güçlendirilmiş GPS Konum Alma Fonksiyonu
   const handleGetDeviceLocation = () => {
     setIsGettingLocation(true);
     setLocationError('');
+
+    if (typeof window !== 'undefined' && window.location.protocol === 'http:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      setLocationError('Güvenlik Uyarısı: Mobil cihazlarda GPS için site HTTPS (güvenli bağlantı) üzerinden çalışmalıdır.');
+      setIsGettingLocation(false);
+      return;
+    }
 
     if (!navigator.geolocation) {
       setLocationError('Tarayıcınız konum servislerini desteklemiyor.');
       setIsGettingLocation(false);
       return;
     }
+
+    const options = {
+      enableHighAccuracy: false,
+      timeout: 25000,
+      maximumAge: 60000
+    };
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -65,11 +78,17 @@ export default function AddReportModal({ isOpen, onClose, onAddReport }: AddRepo
         setIsGettingLocation(false);
       },
       (error) => {
-        console.error(error);
-        setLocationError('Konum alınamadı. Lütfen tarayıcı izinlerini kontrol edin.');
+        console.error('GPS Hatası:', error);
+        let errorMsg = 'Konum alınamadı. Lütfen cihaz ayarlarından tarayıcıya konum izni verin.';
+        if (error.code === error.PERMISSION_DENIED) {
+          errorMsg = 'Konum izni reddedildi. Tarayıcı adres çubuğundan izinleri kontrol edin.';
+        } else if (error.code === error.TIMEOUT) {
+          errorMsg = 'Konum alma zaman aşımına uğradı. Lütfen açık alanda tekrar deneyin.';
+        }
+        setLocationError(errorMsg);
         setIsGettingLocation(false);
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      options
     );
   };
 
@@ -179,18 +198,17 @@ export default function AddReportModal({ isOpen, onClose, onAddReport }: AddRepo
               </p>
             ) : (
               <p className="text-[10px] text-cyan-400 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3 shrink-0" /> Rapor paylaşmak için cihaz konumunuzu almalısınız.
+                <AlertCircle className="w-3 h-3 shrink-0" /> Rapor paylaşmak için "Konumumu Al" butonuna basın.
               </p>
             )}
             {locationError && (
-              <p className="text-[10px] text-rose-400">{locationError}</p>
+              <p className="text-[10px] text-rose-400 font-medium bg-rose-950/40 p-2 rounded border border-rose-900/50">{locationError}</p>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-slate-300 font-medium mb-1">Hedef Balık Türü</label>
-              {/* Hem listeden seçilebilen hem de klavyeden serbest yazı/otomatik tamamlama destekleyen input */}
               <input 
                 type="text" 
                 list="fish-species-options"
