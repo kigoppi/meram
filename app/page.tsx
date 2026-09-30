@@ -24,7 +24,7 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* İkiye Bölünmüş Ana Ekran (Sol: Balıkçılık [Mavi/Okyanus], Sağ: Mantarcılık [Kahve/Orman]) */}
+      {/* İkiye Bölünmüş Ana Ekran (Sol: Balıkçılık, Sağ: Mantarcılık) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full max-w-5xl">
         
         {/* SOL TAF: Balıkçılık Teması (Mavi & Okyanus) */}

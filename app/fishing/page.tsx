@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { 
   Fish, MapPin, ThumbsUp, ThumbsDown, Plus, 
-  Compass, ArrowLeft, Navigation, X, Clock, Sparkles, Waves, Info, Layers, ListFilter 
+  Compass, ArrowLeft, X, Clock, Sparkles, Waves, Info 
 } from 'lucide-react';
 import AddReportModal from '@/components/reports/AddReportModal';
 
@@ -48,14 +48,10 @@ export default function FishingModulePage() {
   const router = useRouter();
   const [reports, setReports] = useState<Report[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const [showWeatherLayer, setShowWeatherLayer] = useState(false);
-  const [isSelectingLocation, setIsSelectingLocation] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [activeDetailReport, setActiveDetailReport] = useState<Report | null>(null);
-
-  // Mobil Görünüm Sekmesi ('map' | 'latest' | 'archive')
   const [mobileTab, setMobileTab] = useState<'map' | 'latest' | 'archive'>('map');
 
   useEffect(() => {
@@ -115,12 +111,6 @@ export default function FishingModulePage() {
     localStorage.setItem('fishing_reports', JSON.stringify(newReports));
   };
 
-  const handleMapClick = (coords: { lat: number; lng: number }) => {
-    setSelectedCoords(coords);
-    setIsSelectingLocation(false);
-    setIsModalOpen(true);
-  };
-
   const handleVote = (id: string, type: 'up' | 'down') => {
     const now = Date.now();
     const updated = reports.map(rep => {
@@ -159,7 +149,6 @@ export default function FishingModulePage() {
     };
     const updated = [reportWithAuthor, ...reports];
     saveAndSetReports(updated);
-    setSelectedCoords(null);
   };
 
   const getDisplayTime = (createdAt?: number, timeString?: string) => {
@@ -176,7 +165,6 @@ export default function FishingModulePage() {
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#030712] text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-black">
       
-      {/* Üst Navigasyon Barı (Mobil Uyumlu Küçültülmüş Font ve Boşluklar) */}
       <header className="h-14 sm:h-16 border-b border-cyan-900/30 bg-[#030712]/95 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl">
         <div className="flex items-center gap-2 sm:gap-4">
           <button 
@@ -184,8 +172,7 @@ export default function FishingModulePage() {
             className="group px-2.5 py-1.5 rounded-xl bg-slate-900/80 hover:bg-cyan-950/50 border border-slate-800 hover:border-cyan-500/40 text-slate-300 hover:text-cyan-400 transition-all flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold cursor-pointer shadow-md"
           >
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-            <span className="hidden sm:inline">Ana Üsse Dön</span>
-            <span className="sm:hidden">Üs</span>
+            <span>Anasayfa</span>
           </button>
           
           <div className="flex items-center gap-2">
@@ -205,19 +192,6 @@ export default function FishingModulePage() {
 
         <div className="flex items-center gap-1.5 sm:gap-2.5">
           <button 
-            onClick={() => setIsSelectingLocation(true)}
-            className={`px-2 sm:px-3 py-1.5 rounded-xl font-bold flex items-center gap-1 text-[11px] sm:text-xs tracking-wide transition-all cursor-pointer shadow-lg border ${
-              isSelectingLocation 
-                ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-400 animate-pulse font-black' 
-                : 'bg-cyan-950/60 hover:bg-cyan-900/80 text-cyan-300 border-cyan-800/60'
-            }`}
-          >
-            <Navigation className="w-3 h-3" />
-            <span className="hidden md:inline">{isSelectingLocation ? 'Konum Seçiliyor...' : 'Haritadan Konum Seç'}</span>
-            <span className="md:hidden">Seç</span>
-          </button>
-
-          <button 
             onClick={() => setIsInfoModalOpen(true)}
             className="p-1.5 sm:p-2 rounded-xl bg-slate-900/80 hover:bg-cyan-950/50 border border-slate-800 text-cyan-400 transition-colors cursor-pointer shadow-md"
             title="Nasıl Kullanılır?"
@@ -226,16 +200,15 @@ export default function FishingModulePage() {
           </button>
 
           <button 
-            onClick={() => setIsSelectingLocation(true)}
+            onClick={() => setIsModalOpen(true)}
             className="group relative px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 text-white font-bold text-[11px] sm:text-xs uppercase tracking-wider flex items-center gap-1 shadow-lg shadow-cyan-600/35 transition-all cursor-pointer border border-cyan-400/30 active:scale-95"
           >
             <Plus className="w-3.5 h-3.5 transition-transform group-hover:rotate-90 duration-300" />
-            <span className="hidden sm:inline">Rapor Ekle</span>
+            <span>Rapor Ekle</span>
           </button>
         </div>
       </header>
 
-      {/* MOBİL ALT SEKME ÇUBUĞU (Sadece Mobilde Görünür) */}
       <div className="flex lg:hidden bg-slate-950 border-b border-cyan-900/40 p-1.5 shrink-0 z-40 justify-around text-xs font-bold">
         <button
           onClick={() => setMobileTab('latest')}
@@ -252,7 +225,7 @@ export default function FishingModulePage() {
             mobileTab === 'map' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
           }`}
         >
-          <Navigation className="w-3.5 h-3.5" />
+          <Waves className="w-3.5 h-3.5" />
           <span>Harita</span>
         </button>
         <button
@@ -266,17 +239,15 @@ export default function FishingModulePage() {
         </button>
       </div>
 
-      {/* Ana İçerik Alanı (Responsive Grid & Mobil Sekme Yönetimi) */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 h-[calc(100vh-7rem)] lg:h-[calc(100vh-4rem)] overflow-hidden">
         
-        {/* SOL SÜTUN (Mobilde sadece 'latest' sekmesi seçiliyse görünür, Masaüstünde her zaman görünür) */}
         <div className={`lg:col-span-3 bg-[#030712] border-r border-cyan-900/30 flex flex-col h-full overflow-hidden ${
           mobileTab === 'latest' ? 'flex' : 'hidden lg:flex'
         }`}>
           <div className="p-3.5 border-b border-cyan-900/20 bg-[#030712]/90 shrink-0 hidden lg:flex items-center justify-between">
             <h2 className="text-xs font-black tracking-wider uppercase text-cyan-400 flex items-center gap-1.5">
               <Sparkles className="w-3 h-3 text-cyan-400 animate-pulse" />
-              <span>En Güncel Akış (Sol Üst)</span>
+              <span>En Güncel Akış</span>
             </h2>
             <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[10px] font-bold">
               {latestReports.length} / 10
@@ -322,35 +293,16 @@ export default function FishingModulePage() {
           </div>
         </div>
 
-        {/* ORTA SÜTUN: Harita (Mobilde sadece 'map' sekmesindeyken tam ekran görünür) */}
         <div className={`lg:col-span-6 relative bg-[#0b0f19] border-r border-cyan-900/30 flex flex-col h-full overflow-hidden ${
           mobileTab === 'map' ? 'flex' : 'hidden lg:flex'
         }`}>
-          {isSelectingLocation && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[400] bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-3 sm:px-4 py-2 rounded-xl shadow-2xl shadow-cyan-500/40 flex items-center gap-2 text-[11px] sm:text-xs font-bold tracking-wide border border-cyan-300/40 animate-pulse">
-              <Navigation className="w-3.5 h-3.5 animate-spin text-cyan-200" />
-              <span>Haritada Konuma Tıklayın...</span>
-              <button 
-                onClick={() => setIsSelectingLocation(false)} 
-                className="p-1 rounded-full bg-cyan-950/60 hover:bg-cyan-900 text-white cursor-pointer ml-1"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          )}
-
           <InteractiveMap 
-            onMapClick={handleMapClick} 
             reports={reports} 
             showWeatherLayer={showWeatherLayer}
             onWeatherLayerToggle={setShowWeatherLayer}
-            isSelectingLocation={isSelectingLocation}
-            tempSelectedCoords={selectedCoords}
-            isModalOpen={isModalOpen || !!activeDetailReport}
           />
         </div>
 
-        {/* SAĞ SÜTUN: Arşiv (Mobilde sadece 'archive' sekmesindeyken görünür) */}
         <div className={`lg:col-span-3 bg-[#030712] flex flex-col h-full overflow-hidden ${
           mobileTab === 'archive' ? 'flex' : 'hidden lg:flex'
         }`}>
@@ -405,7 +357,6 @@ export default function FishingModulePage() {
 
       </div>
 
-      {/* RAPOR DETAY MODALI */}
       {activeDetailReport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-cyan-500/40 w-full max-w-lg rounded-2xl p-5 sm:p-6 relative shadow-2xl text-white space-y-4 my-auto max-h-[90vh] overflow-y-auto">
@@ -491,16 +442,13 @@ export default function FishingModulePage() {
         </div>
       )}
 
-      {/* Rapor Ekleme Modalı */}
       <AddReportModal 
         isOpen={isModalOpen}
-        onClose={() => { setIsModalOpen(false); setSelectedCoords(null); }}
+        onClose={() => setIsModalOpen(false)}
         onAddReport={handleAddNewReport}
         moduleType="fishing"
-        selectedCoords={selectedCoords}
       />
 
-      {/* Bilgilendirme Modalı */}
       {isInfoModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-cyan-500/30 w-full max-w-md rounded-2xl p-6 relative shadow-2xl text-white space-y-4">
@@ -530,7 +478,7 @@ export default function FishingModulePage() {
                 <span className="w-5 h-5 rounded-full bg-cyan-500/10 text-cyan-400 font-bold flex items-center justify-center shrink-0 border border-cyan-500/30">2</span>
                 <div>
                   <strong className="text-white block mb-0.5">Rapor Paylaşımı</strong>
-                  "Rapor Ekle" butonuyla veya haritadan konum seçerek anında rapor yayınlayabilirsiniz.
+                  "Rapor Ekle" butonuyla cihazınızın GPS konumunu kullanarak anında rapor yayınlayabilirsiniz.
                 </div>
               </div>
             </div>

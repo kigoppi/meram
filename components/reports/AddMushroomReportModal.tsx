@@ -1,26 +1,55 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, MapPin, Upload, Image as ImageIcon } from 'lucide-react';
+import { X, MapPin, Upload, Navigation, Loader2, AlertCircle } from 'lucide-react';
 
 interface AddMushroomReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddReport: (report: any) => void;
-  selectedCoords: { lat: number; lng: number } | null;
 }
 
-export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, selectedCoords }: AddMushroomReportModalProps) {
+export default function AddMushroomReportModal({ isOpen, onClose, onAddReport }: AddMushroomReportModalProps) {
   const [title, setTitle] = useState('');
   const [locationName, setLocationName] = useState('');
   const [content, setContent] = useState('');
   const [species, setSpecies] = useState('');         
-  const [forestType, setForestType] = useState('');   
   const [imagePreview, setImagePreview] = useState('');
+  
+  // GPS Konum Durumları (Zorunlu)
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [locationError, setLocationError] = useState('');
 
   if (!isOpen) return null;
 
-  // Bilgisayardan/telefondan resim seçme ve base64 formatına çevirme
+  const handleGetDeviceLocation = () => {
+    setIsGettingLocation(true);
+    setLocationError('');
+
+    if (!navigator.geolocation) {
+      setLocationError('Tarayıcınız konum servislerini desteklemiyor.');
+      setIsGettingLocation(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCoords({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+        setIsGettingLocation(false);
+      },
+      (error) => {
+        console.error(error);
+        setLocationError('Konum alınamadı. Lütfen tarayıcı izinlerini kontrol edin.');
+        setIsGettingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -34,7 +63,7 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, s
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !locationName.trim()) return;
+    if (!title.trim() || !locationName.trim() || !coords) return;
 
     const newReport = {
       id: Date.now().toString(),
@@ -47,11 +76,11 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, s
       downvotes: 0,
       status: 'verified',
       createdAt: Date.now(),
-      coordinates: selectedCoords || { lat: 40.7569, lng: 30.3787 }, 
+      coordinates: coords, 
       imageUrl: imagePreview || '',
       mushroomData: {
         species: species.trim() || 'Kanlıca Mantarı',
-        forestType: forestType.trim() || 'Çam Altı',
+        forestType: 'Ormanlık Alan',
         soilCondition: 'Nemli / Yağmur Sonrası'
       }
     };
@@ -61,8 +90,8 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, s
     setLocationName('');
     setContent('');
     setSpecies('');
-    setForestType('');
     setImagePreview('');
+    setCoords(null);
     onClose();
   };
 
@@ -105,30 +134,47 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, s
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[#d4c5b9] font-medium mb-1">Mantar Türü</label>
-              <input 
-                type="text" 
-                placeholder="Örn: Kuzu Göbeği" 
-                value={species}
-                onChange={(e) => setSpecies(e.target.value)}
-                className="w-full bg-[#16110e] border border-[#32261e] rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-600"
-              />
+          {/* GPS Konum Alanı (Zorunlu) */}
+          <div className={`p-3 rounded-xl border space-y-2 ${coords ? 'bg-[#16110e] border-emerald-600/50' : 'bg-amber-950/20 border-amber-600/40'}`}>
+            <div className="flex items-center justify-between">
+              <span className="text-[#d4c5b9] font-medium flex items-center gap-1.5">
+                Konum Bilgisi (GPS) <span className="text-amber-500">*Zorunlu</span>
+              </span>
+              <button
+                type="button"
+                onClick={handleGetDeviceLocation}
+                disabled={isGettingLocation}
+                className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-600 text-white font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 shadow-md"
+              >
+                {isGettingLocation ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Navigation className="w-3.5 h-3.5" />}
+                <span>{coords ? 'Konum Alındı ✓' : 'Konumumu Al'}</span>
+              </button>
             </div>
-            <div>
-              <label className="block text-[#d4c5b9] font-medium mb-1">Ağaç / Bölge Örtüsü</label>
-              <input 
-                type="text" 
-                placeholder="Örn: Çam / Meşe Altı" 
-                value={forestType}
-                onChange={(e) => setForestType(e.target.value)}
-                className="w-full bg-[#16110e] border border-[#32261e] rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-600"
-              />
-            </div>
+            {coords ? (
+              <p className="text-[10px] text-emerald-400 font-mono">
+                ✓ Koordinatlar eklendi: {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
+              </p>
+            ) : (
+              <p className="text-[10px] text-amber-400 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3 shrink-0" /> Rapor paylaşmak için cihaz konumunuzu almalısınız.
+              </p>
+            )}
+            {locationError && (
+              <p className="text-[10px] text-rose-400">{locationError}</p>
+            )}
           </div>
 
-          {/* Dosyadan Fotoğraf Yükleme Alanı */}
+          <div>
+            <label className="block text-[#d4c5b9] font-medium mb-1">Mantar Türü</label>
+            <input 
+              type="text" 
+              placeholder="Örn: Kuzu Göbeği / Kanlıca" 
+              value={species}
+              onChange={(e) => setSpecies(e.target.value)}
+              className="w-full bg-[#16110e] border border-[#32261e] rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-600"
+            />
+          </div>
+
           <div>
             <label className="block text-[#d4c5b9] font-medium mb-1">Mantar Fotoğrafı Yükle</label>
             <div className="flex items-center gap-3">
@@ -171,9 +217,12 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, s
             </button>
             <button 
               type="submit"
-              className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-700 to-emerald-800 text-white font-bold transition-all shadow-lg cursor-pointer"
+              disabled={!coords}
+              className={`px-5 py-2 rounded-xl font-bold transition-all shadow-lg ${
+                coords ? 'bg-gradient-to-r from-amber-700 to-emerald-800 text-white cursor-pointer' : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
+              }`}
             >
-              Raporu Yayınla
+              {coords ? 'Raporu Yayınla' : 'Önce Konum Gerekli'}
             </button>
           </div>
         </form>

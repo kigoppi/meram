@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { 
   Trees, MapPin, ThumbsUp, ThumbsDown, Plus, 
-  Compass, ArrowLeft, Navigation, X, Clock, Sparkles, Waves, Info 
+  Compass, ArrowLeft, X, Clock, Sparkles, Waves, Info 
 } from 'lucide-react';
 import AddMushroomReportModal from '@/components/reports/AddMushroomReportModal';
 
@@ -48,9 +48,7 @@ export default function MushroomModulePage() {
   const router = useRouter();
   const [reports, setReports] = useState<MushroomReport[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
 
-  const [isSelectingLocation, setIsSelectingLocation] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [activeDetailReport, setActiveDetailReport] = useState<MushroomReport | null>(null);
   const [mobileTab, setMobileTab] = useState<'map' | 'latest' | 'archive'>('map');
@@ -112,12 +110,6 @@ export default function MushroomModulePage() {
     localStorage.setItem('mushroom_reports', JSON.stringify(newReports));
   };
 
-  const handleMapClick = (coords: { lat: number; lng: number }) => {
-    setSelectedCoords(coords);
-    setIsSelectingLocation(false);
-    setIsModalOpen(true);
-  };
-
   const handleVote = (id: string, type: 'up' | 'down') => {
     const now = Date.now();
     const updated = reports.map(rep => {
@@ -156,7 +148,6 @@ export default function MushroomModulePage() {
     };
     const updated = [reportWithAuthor, ...reports];
     saveAndSetReports(updated);
-    setSelectedCoords(null);
   };
 
   const getDisplayTime = (createdAt?: number, timeString?: string) => {
@@ -173,7 +164,6 @@ export default function MushroomModulePage() {
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#16110e] text-[#f4eee6] flex flex-col selection:bg-amber-600 selection:text-white">
       
-      {/* Üst Navigasyon Barı */}
       <header className="h-14 sm:h-16 border-b border-[#32261e] bg-[#1c140d]/95 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl">
         <div className="flex items-center gap-2 sm:gap-4">
           <button 
@@ -201,19 +191,6 @@ export default function MushroomModulePage() {
 
         <div className="flex items-center gap-1.5 sm:gap-2.5">
           <button 
-            onClick={() => setIsSelectingLocation(true)}
-            className={`px-2 sm:px-3 py-1.5 rounded-xl font-bold flex items-center gap-1 text-[11px] sm:text-xs tracking-wide transition-all cursor-pointer shadow-lg border ${
-              isSelectingLocation 
-                ? 'bg-amber-600 hover:bg-amber-500 text-white border-amber-400 animate-pulse font-black' 
-                : 'bg-[#261d15] hover:bg-[#36291e] text-amber-300 border-[#3d2e24]'
-            }`}
-          >
-            <Navigation className="w-3 h-3" />
-            <span className="hidden md:inline">{isSelectingLocation ? 'Konum Seçiliyor...' : 'Haritadan Konum Seç'}</span>
-            <span className="md:hidden">Seç</span>
-          </button>
-
-          <button 
             onClick={() => setIsInfoModalOpen(true)}
             className="p-1.5 sm:p-2 rounded-xl bg-[#261d15] hover:bg-[#36291e] border border-[#3d2e24] text-amber-400 transition-colors cursor-pointer shadow-md"
             title="Nasıl Kullanılır?"
@@ -222,16 +199,15 @@ export default function MushroomModulePage() {
           </button>
 
           <button 
-            onClick={() => setIsSelectingLocation(true)}
+            onClick={() => setIsModalOpen(true)}
             className="group relative px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-700 via-yellow-800 to-emerald-800 text-white font-bold text-[11px] sm:text-xs uppercase tracking-wider flex items-center gap-1 shadow-lg shadow-amber-950/50 transition-all cursor-pointer border border-amber-600/40 active:scale-95"
           >
             <Plus className="w-3.5 h-3.5 transition-transform group-hover:rotate-90 duration-300" />
-            <span className="hidden sm:inline">Rapor Ekle</span>
+            <span>Rapor Ekle</span>
           </button>
         </div>
       </header>
 
-      {/* Mobil Sekme Çubuğu */}
       <div className="flex lg:hidden bg-[#1c140d] border-b border-[#32261e] p-1.5 shrink-0 z-40 justify-around text-xs font-bold">
         <button
           onClick={() => setMobileTab('latest')}
@@ -248,7 +224,7 @@ export default function MushroomModulePage() {
             mobileTab === 'map' ? 'bg-amber-700 text-white shadow-md' : 'text-[#a8998e] hover:text-white'
           }`}
         >
-          <Navigation className="w-3.5 h-3.5" />
+          <Trees className="w-3.5 h-3.5" />
           <span>Harita</span>
         </button>
         <button
@@ -262,10 +238,8 @@ export default function MushroomModulePage() {
         </button>
       </div>
 
-      {/* 3 Sütunlu Yerleşim */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 h-[calc(100vh-7rem)] lg:h-[calc(100vh-4rem)] overflow-hidden">
         
-        {/* SOL SÜTUN */}
         <div className={`lg:col-span-3 bg-[#16110e] border-r border-[#32261e] flex flex-col h-full overflow-hidden ${
           mobileTab === 'latest' ? 'flex' : 'hidden lg:flex'
         }`}>
@@ -318,32 +292,12 @@ export default function MushroomModulePage() {
           </div>
         </div>
 
-        {/* ORTA SÜTUN: Mantar Haritası */}
         <div className={`lg:col-span-6 relative bg-[#1c140d] border-r border-[#32261e] flex flex-col h-full overflow-hidden ${
           mobileTab === 'map' ? 'flex' : 'hidden lg:flex'
         }`}>
-          {isSelectingLocation && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[400] bg-gradient-to-r from-amber-700 to-emerald-800 text-white px-3 sm:px-4 py-2 rounded-xl shadow-2xl shadow-amber-950/50 flex items-center gap-2 text-[11px] sm:text-xs font-bold tracking-wide border border-amber-500/40 animate-pulse">
-              <Navigation className="w-3.5 h-3.5 animate-spin text-amber-200" />
-              <span>Haritada Konuma Tıklayın...</span>
-              <button 
-                onClick={() => setIsSelectingLocation(false)} 
-                className="p-1 rounded-full bg-black/30 hover:bg-black/50 text-white cursor-pointer ml-1"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          )}
-
-          <MushroomMap 
-            onMapClick={handleMapClick} 
-            reports={reports} 
-            isSelectingLocation={isSelectingLocation}
-            tempSelectedCoords={selectedCoords}
-          />
+          <MushroomMap reports={reports} />
         </div>
 
-        {/* SAĞ SÜTUN: Arşiv */}
         <div className={`lg:col-span-3 bg-[#16110e] flex flex-col h-full overflow-hidden ${
           mobileTab === 'archive' ? 'flex' : 'hidden lg:flex'
         }`}>
@@ -398,7 +352,6 @@ export default function MushroomModulePage() {
 
       </div>
 
-      {/* RAPOR DETAY MODALI */}
       {activeDetailReport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="bg-[#1c140d] border border-amber-700/40 w-full max-w-lg rounded-2xl p-5 sm:p-6 relative shadow-2xl text-[#f4eee6] space-y-4 my-auto max-h-[90vh] overflow-y-auto">
@@ -486,12 +439,10 @@ export default function MushroomModulePage() {
 
       <AddMushroomReportModal 
         isOpen={isModalOpen}
-        onClose={() => { setIsModalOpen(false); setSelectedCoords(null); }}
+        onClose={() => setIsModalOpen(false)}
         onAddReport={handleAddNewReport}
-        selectedCoords={selectedCoords}
       />
 
-      {/* Bilgilendirme Modalı */}
       {isInfoModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="bg-[#1c140d] border border-amber-700/40 w-full max-w-md rounded-2xl p-6 relative shadow-2xl text-[#f4eee6] space-y-4">
