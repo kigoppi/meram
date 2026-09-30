@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, MapPin, Upload, Navigation, Loader2, AlertCircle, HelpCircle, Compass } from 'lucide-react';
+import { X, MapPin, Upload, Navigation, Loader2, Compass, AlertCircle } from 'lucide-react';
 
 interface AddMushroomReportModalProps {
   isOpen: boolean;
@@ -20,14 +20,12 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, o
   
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState('');
-  const [showHelp, setShowHelp] = useState(false);
 
   if (!isOpen) return null;
 
   const handleGetDeviceLocation = () => {
     setIsGettingLocation(true);
     setLocationError('');
-    setShowHelp(false);
 
     if (!navigator.geolocation) {
       setLocationError('Tarayıcınız konum servislerini desteklemiyor.');
@@ -37,23 +35,14 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, o
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
-        // GPS koordinatını üst bileşene iletmek veya form state'inde saklamak için onAddReport / geçici tutma kullanılabilir
         setIsGettingLocation(false);
       },
       (error) => {
         console.error('GPS Hatası:', error);
-        let errorMsg = 'Konum alınamadı. İzinleri kontrol edin.';
-        if (error.code === error.PERMISSION_DENIED) {
-          errorMsg = 'Konum izni reddedildi.';
-          setShowHelp(true);
-        } else if (error.code === error.TIMEOUT) {
-          errorMsg = 'Konum zaman aşımına uğradı.';
-        }
-        setLocationError(errorMsg);
+        setLocationError('GPS konumu alınamadı. Lütfen "Haritadan Seç" seçeneğini kullanın.');
         setIsGettingLocation(false);
       },
-      { enableHighAccuracy: false, timeout: 15000, maximumAge: 0 }
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
     );
   };
 
@@ -140,58 +129,49 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, o
             />
           </div>
 
-          {/* Konum Belirleme Alanı (GPS veya Haritadan Seç) */}
-          <div className={`p-3 rounded-xl border space-y-2 ${selectedCoords ? 'bg-[#16110e] border-emerald-600/50' : 'bg-amber-950/20 border-amber-600/40'}`}>
-            <div className="flex items-center justify-between">
-              <span className="text-[#d4c5b9] font-medium flex items-center gap-1.5">
-                Konum Bilgisi <span className="text-amber-500">*Zorunlu</span>
-              </span>
-              <div className="flex items-center gap-1.5">
+          {/* İki Seçenekli Konum Alanı */}
+          <div className={`p-3.5 rounded-xl border space-y-3 ${selectedCoords ? 'bg-[#16110e] border-emerald-600/50' : 'bg-amber-950/20 border-amber-600/40'}`}>
+            <span className="text-[#d4c5b9] font-medium block">
+              Konum Belirleme Yöntemi <span className="text-amber-500">*Zorunlu</span>
+            </span>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={handleGetDeviceLocation}
+                disabled={isGettingLocation}
+                className="py-2.5 px-3 rounded-xl bg-amber-700 hover:bg-amber-600 text-white font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 shadow-md text-xs"
+              >
+                {isGettingLocation ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Navigation className="w-3.5 h-3.5" />}
+                <span>Konumdan Al</span>
+              </button>
+
+              {onOpenMapSelector && (
                 <button
                   type="button"
-                  onClick={handleGetDeviceLocation}
-                  disabled={isGettingLocation}
-                  className="px-2.5 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-600 text-white font-bold flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50 text-[11px]"
+                  onClick={onOpenMapSelector}
+                  className="py-2.5 px-3 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-md text-xs"
                 >
-                  {isGettingLocation ? <Loader2 className="w-3 h-3 animate-spin" /> : <Navigation className="w-3 h-3" />}
-                  <span>GPS Al</span>
+                  <Compass className="w-3.5 h-3.5" />
+                  <span>Haritadan Seç</span>
                 </button>
-
-                {onOpenMapSelector && (
-                  <button
-                    type="button"
-                    onClick={onOpenMapSelector}
-                    className="px-2.5 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white font-bold flex items-center gap-1 transition-colors cursor-pointer text-[11px]"
-                  >
-                    <Compass className="w-3 h-3" />
-                    <span>Haritadan Seç</span>
-                  </button>
-                )}
-              </div>
+              )}
             </div>
 
             {selectedCoords ? (
-              <p className="text-[10px] text-emerald-400 font-mono">
-                ✓ Seçilen Konum: {selectedCoords.lat.toFixed(4)}, {selectedCoords.lng.toFixed(4)}
+              <p className="text-[10px] text-emerald-400 font-mono text-center">
+                ✓ Konum Seçildi: {selectedCoords.lat.toFixed(4)}, {selectedCoords.lng.toFixed(4)}
               </p>
             ) : (
-              <p className="text-[10px] text-amber-400 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3 shrink-0" /> Lütfen GPS kullanın ya da "Haritadan Seç" butonuna basın.
+              <p className="text-[10px] text-amber-400 flex items-center justify-center gap-1 text-center">
+                <AlertCircle className="w-3 h-3 shrink-0" /> Lütfen yukarıdan bir yöntem seçin.
               </p>
             )}
 
             {locationError && (
-              <div className="space-y-1 pt-1">
-                <p className="text-[10px] text-rose-400 font-medium bg-rose-950/50 p-2 rounded border border-rose-900/50 flex items-center justify-between">
-                  <span>{locationError}</span>
-                  {showHelp && <HelpCircle className="w-4 h-4 text-rose-300 shrink-0 ml-1" />}
-                </p>
-                {showHelp && (
-                  <p className="text-[9px] text-[#d4c5b9] bg-[#16110e] p-2 rounded border border-[#32261e] leading-relaxed">
-                    💡 <strong>Çözüm:</strong> Tarayıcı kilit simgesinden konum iznini verin veya doğrudan <strong>Haritadan Seç</strong> özelliğini kullanın.
-                  </p>
-                )}
-              </div>
+              <p className="text-[10px] text-rose-400 text-center font-medium bg-rose-950/50 p-1.5 rounded">
+                {locationError}
+              </p>
             )}
           </div>
 
