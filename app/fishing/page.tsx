@@ -1,5 +1,5 @@
 'use client';
-
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
