@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, MapPin, Upload, Navigation, Loader2, AlertCircle } from 'lucide-react';
+import { X, MapPin, Upload, Navigation, Loader2, AlertCircle, HelpCircle } from 'lucide-react';
 
 interface AddReportModalProps {
   isOpen: boolean;
@@ -39,23 +39,19 @@ export default function AddReportModal({ isOpen, onClose, onAddReport }: AddRepo
   const [lureField, setLureField] = useState(''); 
   const [imagePreview, setImagePreview] = useState('');
 
-  // GPS Konum Durumları (Zorunlu)
+  // GPS Konum Durumları
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState('');
+  const [showHelp, setShowHelp] = useState(false);
 
   if (!isOpen) return null;
 
-  // Mobil Uyumlu Güçlendirilmiş GPS Konum Alma Fonksiyonu
+  // Güçlendirilmiş GPS Konum Alma
   const handleGetDeviceLocation = () => {
     setIsGettingLocation(true);
     setLocationError('');
-
-    if (typeof window !== 'undefined' && window.location.protocol === 'http:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      setLocationError('Güvenlik Uyarısı: Mobil cihazlarda GPS için site HTTPS (güvenli bağlantı) üzerinden çalışmalıdır.');
-      setIsGettingLocation(false);
-      return;
-    }
+    setShowHelp(false);
 
     if (!navigator.geolocation) {
       setLocationError('Tarayıcınız konum servislerini desteklemiyor.');
@@ -65,8 +61,8 @@ export default function AddReportModal({ isOpen, onClose, onAddReport }: AddRepo
 
     const options = {
       enableHighAccuracy: false,
-      timeout: 25000,
-      maximumAge: 60000
+      timeout: 15000,
+      maximumAge: 0
     };
 
     navigator.geolocation.getCurrentPosition(
@@ -79,17 +75,25 @@ export default function AddReportModal({ isOpen, onClose, onAddReport }: AddRepo
       },
       (error) => {
         console.error('GPS Hatası:', error);
-        let errorMsg = 'Konum alınamadı. Lütfen cihaz ayarlarından tarayıcıya konum izni verin.';
+        let errorMsg = 'Konum alınamadı. Lütfen tarayıcı izinlerini kontrol edin.';
         if (error.code === error.PERMISSION_DENIED) {
-          errorMsg = 'Konum izni reddedildi. Tarayıcı adres çubuğundan izinleri kontrol edin.';
+          errorMsg = 'Konum izni reddedildi.';
+          setShowHelp(true);
         } else if (error.code === error.TIMEOUT) {
-          errorMsg = 'Konum alma zaman aşımına uğradı. Lütfen açık alanda tekrar deneyin.';
+          errorMsg = 'Konum zaman aşımına uğradı.';
         }
         setLocationError(errorMsg);
         setIsGettingLocation(false);
       },
       options
     );
+  };
+
+  // Acil Durum / Test İçin Varsayılan Koordinat Atama (İstanbul Boğazı Merkezi)
+  const handleUseDefaultLocation = () => {
+    setCoords({ lat: 41.0082, lng: 28.9784 });
+    setLocationError('');
+    setShowHelp(false);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,7 +180,7 @@ export default function AddReportModal({ isOpen, onClose, onAddReport }: AddRepo
             />
           </div>
 
-          {/* GPS Konum Alanı (Zorunlu) */}
+          {/* GPS Konum Alanı */}
           <div className={`p-3 rounded-xl border space-y-2 ${coords ? 'bg-slate-950 border-emerald-600/50' : 'bg-cyan-950/20 border-cyan-600/40'}`}>
             <div className="flex items-center justify-between">
               <span className="text-slate-300 font-medium flex items-center gap-1.5">
@@ -192,17 +196,38 @@ export default function AddReportModal({ isOpen, onClose, onAddReport }: AddRepo
                 <span>{coords ? 'Konum Alındı ✓' : 'Konumumu Al'}</span>
               </button>
             </div>
+
             {coords ? (
               <p className="text-[10px] text-emerald-400 font-mono">
                 ✓ Koordinatlar eklendi: {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
               </p>
             ) : (
-              <p className="text-[10px] text-cyan-400 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3 shrink-0" /> Rapor paylaşmak için "Konumumu Al" butonuna basın.
-              </p>
+              <div className="space-y-1.5">
+                <p className="text-[10px] text-cyan-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3 shrink-0" /> Rapor paylaşmak için konum gereklidir.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleUseDefaultLocation}
+                  className="text-[10px] text-cyan-300 underline hover:text-white cursor-pointer block font-medium"
+                >
+                  Konum alınamıyorsa bölge merkezini kullanmak için tıklayın
+                </button>
+              </div>
             )}
+
             {locationError && (
-              <p className="text-[10px] text-rose-400 font-medium bg-rose-950/40 p-2 rounded border border-rose-900/50">{locationError}</p>
+              <div className="space-y-1 pt-1">
+                <p className="text-[10px] text-rose-400 font-medium bg-rose-950/50 p-2 rounded border border-rose-900/50 flex items-center justify-between">
+                  <span>{locationError}</span>
+                  {showHelp && <HelpCircle className="w-4 h-4 text-rose-300 shrink-0 ml-1" />}
+                </p>
+                {showHelp && (
+                  <p className="text-[9px] text-slate-300 bg-slate-900 p-2 rounded border border-slate-800 leading-relaxed">
+                    💡 <strong>Çözüm:</strong> Tarayıcınızın adres çubuğundaki kilit (🔒) simgesine dokunun, <strong>Site Ayarları (Site settings)</strong> bölümünden Konum iznini <strong>İzin Ver (Allow)</strong> olarak değiştirip sayfayı yenileyin.
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
