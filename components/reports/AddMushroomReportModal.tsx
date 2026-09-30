@@ -98,7 +98,7 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, o
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-[#1c140d] border border-amber-700/40 w-full max-w-md rounded-2xl p-6 relative shadow-2xl text-[#f4eee6] space-y-4 my-auto max-h-[90vh] overflow-y-auto">
+      <div className="bg-[#1c140d] border border-amber-700/40 w-full max-w-md rounded-2xl p-5 sm:p-6 relative shadow-2xl text-[#f4eee6] space-y-4 my-auto max-h-[90vh] overflow-y-auto">
         
         <div className="flex items-center justify-between border-b border-[#32261e] pb-3">
           <h2 className="text-base font-bold text-white flex items-center gap-2">
@@ -135,30 +135,30 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, o
             />
           </div>
 
-          {/* İki Seçenekli Konum Alanı */}
+          {/* Konum Belirleme Yöntemleri (Responsive Alt Alta / Yan Yana) */}
           <div className={`p-3.5 rounded-xl border space-y-3 ${finalActiveCoords ? 'bg-[#16110e] border-emerald-600/50' : 'bg-amber-950/20 border-amber-600/40'}`}>
             <span className="text-[#d4c5b9] font-medium block">
               Konum Belirleme Yöntemi <span className="text-amber-500">*Zorunlu</span>
             </span>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={handleGetDeviceLocation}
                 disabled={isGettingLocation}
-                className="py-2.5 px-3 rounded-xl bg-amber-700 hover:bg-amber-600 text-white font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 shadow-md text-xs"
+                className="py-2.5 px-3 rounded-xl bg-amber-700 hover:bg-amber-600 text-white font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50 shadow-md text-xs w-full"
               >
-                {isGettingLocation ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Navigation className="w-3.5 h-3.5" />}
-                <span>Konumdan Al</span>
+                {isGettingLocation ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
+                <span>Konumdan Al (GPS)</span>
               </button>
 
               {onStartMapSelection && (
                 <button
                   type="button"
                   onClick={onStartMapSelection}
-                  className="py-2.5 px-3 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-md text-xs"
+                  className="py-2.5 px-3 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md text-xs w-full"
                 >
-                  <Compass className="w-3.5 h-3.5" />
+                  <Compass className="w-4 h-4" />
                   <span>Haritadan Seç</span>
                 </button>
               )}

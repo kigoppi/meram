@@ -32,7 +32,6 @@ export default function AddReportModal({ isOpen, onClose, onAddReport, onStartMa
 
   if (!isOpen) return null;
 
-  // 1. Konumdan Al (GPS)
   const handleGetDeviceLocation = () => {
     setIsGettingLocation(true);
     setLocationError('');
@@ -51,7 +50,7 @@ export default function AddReportModal({ isOpen, onClose, onAddReport, onStartMa
       },
       (error) => {
         console.error('GPS Hatası:', error);
-        setLocationError('GPS konumu alınamadı. İzinleri kontrol edin veya "Haritadan Seç" kullanın.');
+        setLocationError('GPS konumu alınamadı. Lütfen "Haritadan Seç" kullanın.');
         setIsGettingLocation(false);
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
@@ -107,7 +106,7 @@ export default function AddReportModal({ isOpen, onClose, onAddReport, onStartMa
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-[#030712] border border-cyan-500/40 w-full max-w-md rounded-2xl p-6 relative shadow-2xl text-white space-y-4 my-auto max-h-[90vh] overflow-y-auto">
+      <div className="bg-[#030712] border border-cyan-500/40 w-full max-w-md rounded-2xl p-5 sm:p-6 relative shadow-2xl text-white space-y-4 my-auto max-h-[90vh] overflow-y-auto">
         
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <h2 className="text-base font-bold text-white flex items-center gap-2">
@@ -144,30 +143,30 @@ export default function AddReportModal({ isOpen, onClose, onAddReport, onStartMa
             />
           </div>
 
-          {/* Konum Belirleme Yöntemleri */}
+          {/* Konum Belirleme Yöntemleri (Responsive Alt Alta / Yan Yana) */}
           <div className={`p-3.5 rounded-xl border space-y-3 ${finalActiveCoords ? 'bg-slate-950 border-emerald-600/50' : 'bg-cyan-950/20 border-cyan-600/40'}`}>
             <span className="text-slate-300 font-medium block">
               Konum Belirleme Yöntemi <span className="text-cyan-400">*Zorunlu</span>
             </span>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={handleGetDeviceLocation}
                 disabled={isGettingLocation}
-                className="py-2.5 px-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 shadow-md text-xs"
+                className="py-2.5 px-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50 shadow-md text-xs w-full"
               >
-                {isGettingLocation ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Navigation className="w-3.5 h-3.5" />}
-                <span>Konumdan Al</span>
+                {isGettingLocation ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
+                <span>Konumdan Al (GPS)</span>
               </button>
 
               {onStartMapSelection && (
                 <button
                   type="button"
                   onClick={onStartMapSelection}
-                  className="py-2.5 px-3 rounded-xl bg-blue-700 hover:bg-blue-600 text-white font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-md text-xs"
+                  className="py-2.5 px-3 rounded-xl bg-blue-700 hover:bg-blue-600 text-white font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md text-xs w-full"
                 >
-                  <Compass className="w-3.5 h-3.5" />
+                  <Compass className="w-4 h-4" />
                   <span>Haritadan Seç</span>
                 </button>
               )}
@@ -175,7 +174,7 @@ export default function AddReportModal({ isOpen, onClose, onAddReport, onStartMa
 
             {finalActiveCoords ? (
               <p className="text-[10px] text-emerald-400 font-mono text-center">
-                ✓ Konum Alındı: {finalActiveCoords.lat.toFixed(4)}, {finalActiveCoords.lng.toFixed(4)}
+                ✓ Konum Seçildi: {finalActiveCoords.lat.toFixed(4)}, {finalActiveCoords.lng.toFixed(4)}
               </p>
             ) : (
               <p className="text-[10px] text-cyan-400 flex items-center justify-center gap-1 text-center">
