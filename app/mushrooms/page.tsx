@@ -53,6 +53,10 @@ export default function MushroomModulePage() {
   const [activeDetailReport, setActiveDetailReport] = useState<MushroomReport | null>(null);
   const [mobileTab, setMobileTab] = useState<'map' | 'latest' | 'archive'>('map');
 
+  // Haritadan Seçim ve Koordinat Yönetimi
+  const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [isSelectingLocation, setIsSelectingLocation] = useState(false);
+
   useEffect(() => {
     const savedReports = localStorage.getItem('mushroom_reports');
     if (savedReports) {
@@ -111,7 +115,6 @@ export default function MushroomModulePage() {
   };
 
   const handleVote = (id: string, type: 'up' | 'down') => {
-    const now = Date.now();
     const updated = reports.map(rep => {
       if (rep.id === id) {
         const newUpvotes = type === 'up' ? rep.upvotes + 1 : rep.upvotes;
@@ -148,6 +151,21 @@ export default function MushroomModulePage() {
     };
     const updated = [reportWithAuthor, ...reports];
     saveAndSetReports(updated);
+    setSelectedCoords(null);
+  };
+
+  const handleStartMapSelection = () => {
+    setIsModalOpen(false);
+    setIsSelectingLocation(true);
+    setMobileTab('map');
+  };
+
+  const handleMapClick = (coords: { lat: number; lng: number }) => {
+    if (isSelectingLocation) {
+      setSelectedCoords(coords);
+      setIsSelectingLocation(false);
+      setIsModalOpen(true);
+    }
   };
 
   const getDisplayTime = (createdAt?: number, timeString?: string) => {
@@ -164,6 +182,18 @@ export default function MushroomModulePage() {
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#16110e] text-[#f4eee6] flex flex-col selection:bg-amber-600 selection:text-white">
       
+      {isSelectingLocation && (
+        <div className="bg-amber-700 text-white text-center py-2 px-4 text-xs font-bold z-[100] animate-pulse flex items-center justify-center gap-2">
+          <span>📍 Harita üzerinde mantar bulduğunuz konuma tıklayın...</span>
+          <button 
+            onClick={() => { setIsSelectingLocation(false); setIsModalOpen(true); }}
+            className="underline text-[11px] bg-amber-900/60 px-2 py-0.5 rounded cursor-pointer"
+          >
+            İptal
+          </button>
+        </div>
+      )}
+
       <header className="h-14 sm:h-16 border-b border-[#32261e] bg-[#1c140d]/95 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl">
         <div className="flex items-center gap-2 sm:gap-4">
           <button 
@@ -295,7 +325,7 @@ export default function MushroomModulePage() {
         <div className={`lg:col-span-6 relative bg-[#1c140d] border-r border-[#32261e] flex flex-col h-full overflow-hidden ${
           mobileTab === 'map' ? 'flex' : 'hidden lg:flex'
         }`}>
-          <MushroomMap reports={reports} />
+          <MushroomMap reports={reports} onMapClick={handleMapClick} />
         </div>
 
         <div className={`lg:col-span-3 bg-[#16110e] flex flex-col h-full overflow-hidden ${
@@ -391,12 +421,6 @@ export default function MushroomModulePage() {
                     <strong className="text-amber-400 font-bold">{activeDetailReport.mushroomData.species}</strong>
                   </div>
                 )}
-                {activeDetailReport.mushroomData?.forestType && (
-                  <div className="bg-[#16110e] p-2.5 rounded-xl border border-[#32261e]">
-                    <span className="text-[#a8998e] block text-[10px]">Orman / Ağaç Tipi</span>
-                    <strong className="text-[#f4eee6] font-bold">{activeDetailReport.mushroomData.forestType}</strong>
-                  </div>
-                )}
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t border-[#32261e] text-xs text-[#a8998e]">
@@ -439,8 +463,10 @@ export default function MushroomModulePage() {
 
       <AddMushroomReportModal 
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => { setIsModalOpen(false); setSelectedCoords(null); }}
         onAddReport={handleAddNewReport}
+        onStartMapSelection={handleStartMapSelection}
+        selectedCoords={selectedCoords}
       />
 
       {isInfoModalOpen && (
@@ -464,7 +490,7 @@ export default function MushroomModulePage() {
                 <span className="w-5 h-5 rounded-full bg-amber-900/40 text-amber-400 font-bold flex items-center justify-center shrink-0 border border-amber-700/40">1</span>
                 <div>
                   <strong className="text-white block mb-0.5">Canlı Orman Ağı</strong>
-                  Haritadan konum seçerek mantar bulduğunuz meraları paylaşabilir, en güncel 10 raporu sol akışta görebilirsiniz.
+                  GPS veya harita üzerinden konum seçerek mantar bulduğunuz meraları paylaşabilirsiniz.
                 </div>
               </div>
 

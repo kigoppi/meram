@@ -54,6 +54,10 @@ export default function FishingModulePage() {
   const [activeDetailReport, setActiveDetailReport] = useState<Report | null>(null);
   const [mobileTab, setMobileTab] = useState<'map' | 'latest' | 'archive'>('map');
 
+  // Haritadan Seçim ve Koordinat Yönetimi
+  const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [isSelectingLocation, setIsSelectingLocation] = useState(false);
+
   useEffect(() => {
     const savedReports = localStorage.getItem('fishing_reports');
     if (savedReports) {
@@ -112,7 +116,6 @@ export default function FishingModulePage() {
   };
 
   const handleVote = (id: string, type: 'up' | 'down') => {
-    const now = Date.now();
     const updated = reports.map(rep => {
       if (rep.id === id) {
         const newUpvotes = type === 'up' ? rep.upvotes + 1 : rep.upvotes;
@@ -149,6 +152,21 @@ export default function FishingModulePage() {
     };
     const updated = [reportWithAuthor, ...reports];
     saveAndSetReports(updated);
+    setSelectedCoords(null);
+  };
+
+  const handleStartMapSelection = () => {
+    setIsModalOpen(false);
+    setIsSelectingLocation(true);
+    setMobileTab('map');
+  };
+
+  const handleMapClick = (coords: { lat: number; lng: number }) => {
+    if (isSelectingLocation) {
+      setSelectedCoords(coords);
+      setIsSelectingLocation(false);
+      setIsModalOpen(true);
+    }
   };
 
   const getDisplayTime = (createdAt?: number, timeString?: string) => {
@@ -165,6 +183,18 @@ export default function FishingModulePage() {
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#030712] text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-black">
       
+      {isSelectingLocation && (
+        <div className="bg-cyan-600 text-white text-center py-2 px-4 text-xs font-bold z-[100] animate-pulse flex items-center justify-center gap-2">
+          <span>📍 Harita üzerinde rapor bırakmak istediğiniz konuma tıklayın...</span>
+          <button 
+            onClick={() => { setIsSelectingLocation(false); setIsModalOpen(true); }}
+            className="underline text-[11px] bg-cyan-900/60 px-2 py-0.5 rounded cursor-pointer"
+          >
+            İptal
+          </button>
+        </div>
+      )}
+
       <header className="h-14 sm:h-16 border-b border-cyan-900/30 bg-[#030712]/95 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl">
         <div className="flex items-center gap-2 sm:gap-4">
           <button 
@@ -300,6 +330,7 @@ export default function FishingModulePage() {
             reports={reports} 
             showWeatherLayer={showWeatherLayer}
             onWeatherLayerToggle={setShowWeatherLayer}
+            onMapClick={handleMapClick}
           />
         </div>
 
@@ -447,6 +478,8 @@ export default function FishingModulePage() {
         onClose={() => setIsModalOpen(false)}
         onAddReport={handleAddNewReport}
         moduleType="fishing"
+        onStartMapSelection={handleStartMapSelection}
+        selectedCoords={selectedCoords}
       />
 
       {isInfoModalOpen && (
@@ -478,7 +511,7 @@ export default function FishingModulePage() {
                 <span className="w-5 h-5 rounded-full bg-cyan-500/10 text-cyan-400 font-bold flex items-center justify-center shrink-0 border border-cyan-500/30">2</span>
                 <div>
                   <strong className="text-white block mb-0.5">Rapor Paylaşımı</strong>
-                  "Rapor Ekle" butonuyla cihazınızın GPS konumunu kullanarak anında rapor yayınlayabilirsiniz.
+                  "Rapor Ekle" butonuyla GPS konumunuzu alabilir ya da "Haritadan Seç" ile dilediğiniz noktayı işaretleyebilirsiniz.
                 </div>
               </div>
             </div>
