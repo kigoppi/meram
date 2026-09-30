@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { 
   Fish, MapPin, ThumbsUp, ThumbsDown, Plus, 
-  Compass, ArrowLeft, Navigation, X, Clock, Sparkles, Waves, Info 
+  Compass, ArrowLeft, Navigation, X, Clock, Sparkles, Waves, Info, Layers, ListFilter 
 } from 'lucide-react';
 import AddReportModal from '@/components/reports/AddReportModal';
 
@@ -54,6 +54,9 @@ export default function FishingModulePage() {
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [activeDetailReport, setActiveDetailReport] = useState<Report | null>(null);
+
+  // Mobil Görünüm Sekmesi ('map' | 'latest' | 'archive')
+  const [mobileTab, setMobileTab] = useState<'map' | 'latest' | 'archive'>('map');
 
   useEffect(() => {
     const savedReports = localStorage.getItem('fishing_reports');
@@ -173,47 +176,50 @@ export default function FishingModulePage() {
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#030712] text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-black">
       
-      <header className="h-16 border-b border-cyan-900/30 bg-[#030712]/90 backdrop-blur-xl px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl shadow-cyan-950/30">
-        <div className="flex items-center gap-4">
+      {/* Üst Navigasyon Barı (Mobil Uyumlu Küçültülmüş Font ve Boşluklar) */}
+      <header className="h-14 sm:h-16 border-b border-cyan-900/30 bg-[#030712]/95 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl">
+        <div className="flex items-center gap-2 sm:gap-4">
           <button 
             onClick={() => router.push('/')}
-            className="group px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-cyan-950/50 border border-slate-800 hover:border-cyan-500/40 text-slate-300 hover:text-cyan-400 transition-all duration-300 flex items-center gap-2 text-xs font-semibold cursor-pointer shadow-md"
+            className="group px-2.5 py-1.5 rounded-xl bg-slate-900/80 hover:bg-cyan-950/50 border border-slate-800 hover:border-cyan-500/40 text-slate-300 hover:text-cyan-400 transition-all flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold cursor-pointer shadow-md"
           >
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Ana Üsse Dön</span>
+            <span className="hidden sm:inline">Ana Üsse Dön</span>
+            <span className="sm:hidden">Üs</span>
           </button>
           
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-400 p-0.5 shadow-md shadow-cyan-500/20 flex items-center justify-center">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-400 p-0.5 shadow-md flex items-center justify-center">
               <div className="w-full h-full bg-[#030712] rounded-[10px] flex items-center justify-center">
-                <Fish className="w-4 h-4 text-cyan-400" />
+                <Fish className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" />
               </div>
             </div>
             <div>
-              <h1 className="text-sm font-black tracking-wide bg-gradient-to-r from-white via-cyan-200 to-cyan-400 bg-clip-text text-transparent">
+              <h1 className="text-xs sm:text-sm font-black tracking-wide bg-gradient-to-r from-white via-cyan-200 to-cyan-400 bg-clip-text text-transparent truncate max-w-[110px] sm:max-w-none">
                 BALIKÇILIK DÜNYASI
               </h1>
-              <p className="text-[9px] text-cyan-500/80 font-medium tracking-wider uppercase">Canlı Mera ve Rapor Ağı</p>
+              <p className="text-[8px] sm:text-[9px] text-cyan-500/80 font-medium tracking-wider uppercase hidden sm:block">Canlı Mera ve Rapor Ağı</p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
           <button 
             onClick={() => setIsSelectingLocation(true)}
-            className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 text-xs tracking-wide transition-all cursor-pointer shadow-lg border ${
+            className={`px-2 sm:px-3 py-1.5 rounded-xl font-bold flex items-center gap-1 text-[11px] sm:text-xs tracking-wide transition-all cursor-pointer shadow-lg border ${
               isSelectingLocation 
                 ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-400 animate-pulse font-black' 
                 : 'bg-cyan-950/60 hover:bg-cyan-900/80 text-cyan-300 border-cyan-800/60'
             }`}
           >
             <Navigation className="w-3 h-3" />
-            <span>{isSelectingLocation ? 'Konum Seçiliyor...' : 'Haritadan Konum Seç'}</span>
+            <span className="hidden md:inline">{isSelectingLocation ? 'Konum Seçiliyor...' : 'Haritadan Konum Seç'}</span>
+            <span className="md:hidden">Seç</span>
           </button>
 
           <button 
             onClick={() => setIsInfoModalOpen(true)}
-            className="p-2 rounded-xl bg-slate-900/80 hover:bg-cyan-950/50 border border-slate-800 hover:border-cyan-500/40 text-cyan-400 transition-colors cursor-pointer shadow-md"
+            className="p-1.5 sm:p-2 rounded-xl bg-slate-900/80 hover:bg-cyan-950/50 border border-slate-800 text-cyan-400 transition-colors cursor-pointer shadow-md"
             title="Nasıl Kullanılır?"
           >
             <Info className="w-3.5 h-3.5" />
@@ -221,19 +227,53 @@ export default function FishingModulePage() {
 
           <button 
             onClick={() => setIsSelectingLocation(true)}
-            className="group relative px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 hover:from-blue-500 hover:to-teal-400 text-white font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-cyan-600/30 transition-all cursor-pointer overflow-hidden border border-cyan-400/30 active:scale-95"
+            className="group relative px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 text-white font-bold text-[11px] sm:text-xs uppercase tracking-wider flex items-center gap-1 shadow-lg shadow-cyan-600/35 transition-all cursor-pointer border border-cyan-400/30 active:scale-95"
           >
-            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
             <Plus className="w-3.5 h-3.5 transition-transform group-hover:rotate-90 duration-300" />
-            <span>Rapor Ekle</span>
+            <span className="hidden sm:inline">Rapor Ekle</span>
           </button>
         </div>
       </header>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 h-[calc(100vh-4rem)] overflow-hidden">
+      {/* MOBİL ALT SEKME ÇUBUĞU (Sadece Mobilde Görünür) */}
+      <div className="flex lg:hidden bg-slate-950 border-b border-cyan-900/40 p-1.5 shrink-0 z-40 justify-around text-xs font-bold">
+        <button
+          onClick={() => setMobileTab('latest')}
+          className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+            mobileTab === 'latest' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Güncel ({latestReports.length})</span>
+        </button>
+        <button
+          onClick={() => setMobileTab('map')}
+          className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+            mobileTab === 'map' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Navigation className="w-3.5 h-3.5" />
+          <span>Harita</span>
+        </button>
+        <button
+          onClick={() => setMobileTab('archive')}
+          className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+            mobileTab === 'archive' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Compass className="w-3.5 h-3.5" />
+          <span>Arşiv ({olderReports.length})</span>
+        </button>
+      </div>
+
+      {/* Ana İçerik Alanı (Responsive Grid & Mobil Sekme Yönetimi) */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 h-[calc(100vh-7rem)] lg:h-[calc(100vh-4rem)] overflow-hidden">
         
-        <div className="lg:col-span-3 bg-[#030712] border-r border-cyan-900/30 flex flex-col h-full overflow-hidden">
-          <div className="p-3.5 border-b border-cyan-900/20 bg-[#030712]/90 shrink-0 flex items-center justify-between">
+        {/* SOL SÜTUN (Mobilde sadece 'latest' sekmesi seçiliyse görünür, Masaüstünde her zaman görünür) */}
+        <div className={`lg:col-span-3 bg-[#030712] border-r border-cyan-900/30 flex flex-col h-full overflow-hidden ${
+          mobileTab === 'latest' ? 'flex' : 'hidden lg:flex'
+        }`}>
+          <div className="p-3.5 border-b border-cyan-900/20 bg-[#030712]/90 shrink-0 hidden lg:flex items-center justify-between">
             <h2 className="text-xs font-black tracking-wider uppercase text-cyan-400 flex items-center gap-1.5">
               <Sparkles className="w-3 h-3 text-cyan-400 animate-pulse" />
               <span>En Güncel Akış (Sol Üst)</span>
@@ -253,23 +293,23 @@ export default function FishingModulePage() {
                 <div 
                   key={report.id}
                   onClick={() => setActiveDetailReport(report)}
-                  className="group p-2.5 rounded-xl bg-slate-900/60 border border-cyan-500/20 hover:border-cyan-400/60 hover:bg-slate-900 transition-all duration-200 cursor-pointer space-y-1.5 shadow-md"
+                  className="group p-3 rounded-xl bg-slate-900/60 border border-cyan-500/20 hover:border-cyan-400/60 hover:bg-slate-900 transition-all duration-200 cursor-pointer space-y-1.5 shadow-md"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-cyan-400 flex items-center gap-1 truncate">
+                    <span className="text-[11px] font-bold text-cyan-400 flex items-center gap-1 truncate">
                       <MapPin className="w-3 h-3 text-cyan-400 shrink-0" /> {report.locationName}
                     </span>
-                    <span className="text-[9px] text-slate-400 font-medium">
+                    <span className="text-[10px] text-slate-400 font-medium">
                       {getDisplayTime(report.createdAt, report.timeString)}
                     </span>
                   </div>
 
-                  <h3 className="text-xs font-bold text-white group-hover:text-cyan-200 transition-colors truncate">
+                  <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-cyan-200 transition-colors truncate">
                     {report.title}
                   </h3>
 
                   {report.subData?.fishType && (
-                    <div className="flex items-center justify-between pt-1 text-[10px]">
+                    <div className="flex items-center justify-between pt-1 text-[11px]">
                       <span className="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800/40 font-semibold truncate">
                         🐟 {report.subData.fishType}
                       </span>
@@ -282,14 +322,17 @@ export default function FishingModulePage() {
           </div>
         </div>
 
-        <div className="lg:col-span-6 relative bg-[#0b0f19] border-r border-cyan-900/30 flex flex-col h-full overflow-hidden">
+        {/* ORTA SÜTUN: Harita (Mobilde sadece 'map' sekmesindeyken tam ekran görünür) */}
+        <div className={`lg:col-span-6 relative bg-[#0b0f19] border-r border-cyan-900/30 flex flex-col h-full overflow-hidden ${
+          mobileTab === 'map' ? 'flex' : 'hidden lg:flex'
+        }`}>
           {isSelectingLocation && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[400] bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-4 py-2 rounded-xl shadow-2xl shadow-cyan-500/40 flex items-center gap-2.5 text-xs font-bold tracking-wide border border-cyan-300/40 animate-pulse">
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[400] bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-3 sm:px-4 py-2 rounded-xl shadow-2xl shadow-cyan-500/40 flex items-center gap-2 text-[11px] sm:text-xs font-bold tracking-wide border border-cyan-300/40 animate-pulse">
               <Navigation className="w-3.5 h-3.5 animate-spin text-cyan-200" />
-              <span>Harita Üzerinde İşaretlenecek Noktaya Tıklayın...</span>
+              <span>Haritada Konuma Tıklayın...</span>
               <button 
                 onClick={() => setIsSelectingLocation(false)} 
-                className="p-1 rounded-full bg-cyan-950/60 hover:bg-cyan-900 text-white cursor-pointer ml-1 transition-colors"
+                className="p-1 rounded-full bg-cyan-950/60 hover:bg-cyan-900 text-white cursor-pointer ml-1"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -307,8 +350,11 @@ export default function FishingModulePage() {
           />
         </div>
 
-        <div className="lg:col-span-3 bg-[#030712] flex flex-col h-full overflow-hidden">
-          <div className="p-3.5 border-b border-cyan-900/20 bg-[#030712]/90 shrink-0 flex items-center justify-between">
+        {/* SAĞ SÜTUN: Arşiv (Mobilde sadece 'archive' sekmesindeyken görünür) */}
+        <div className={`lg:col-span-3 bg-[#030712] flex flex-col h-full overflow-hidden ${
+          mobileTab === 'archive' ? 'flex' : 'hidden lg:flex'
+        }`}>
+          <div className="p-3.5 border-b border-cyan-900/20 bg-[#030712]/90 shrink-0 hidden lg:flex items-center justify-between">
             <h2 className="text-xs font-black tracking-wider uppercase text-cyan-400 flex items-center gap-1.5">
               <Compass className="w-3 h-3 text-cyan-400 animate-spin-slow" />
               <span>Diğer Raporlar (Arşiv)</span>
@@ -328,23 +374,23 @@ export default function FishingModulePage() {
                 <div 
                   key={report.id}
                   onClick={() => setActiveDetailReport(report)}
-                  className="group p-2.5 rounded-xl bg-slate-900/40 border border-slate-800 hover:border-cyan-500/40 hover:bg-slate-900 transition-all duration-200 cursor-pointer space-y-1.5 shadow-md"
+                  className="group p-3 rounded-xl bg-slate-900/40 border border-slate-800 hover:border-cyan-500/40 hover:bg-slate-900 transition-all duration-200 cursor-pointer space-y-1.5 shadow-md"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-cyan-400 flex items-center gap-1 truncate">
+                    <span className="text-[11px] font-bold text-cyan-400 flex items-center gap-1 truncate">
                       <MapPin className="w-3 h-3 text-cyan-400 shrink-0" /> {report.locationName}
                     </span>
-                    <span className="text-[9px] text-slate-500 font-medium">
+                    <span className="text-[10px] text-slate-500 font-medium">
                       {getDisplayTime(report.createdAt, report.timeString)}
                     </span>
                   </div>
 
-                  <h3 className="text-xs font-bold text-slate-300 group-hover:text-cyan-200 transition-colors truncate">
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-300 group-hover:text-cyan-200 transition-colors truncate">
                     {report.title}
                   </h3>
 
                   {report.subData?.fishType && (
-                    <div className="flex items-center justify-between pt-1 text-[10px]">
+                    <div className="flex items-center justify-between pt-1 text-[11px]">
                       <span className="px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800 font-semibold truncate">
                         🐟 {report.subData.fishType}
                       </span>
@@ -359,16 +405,17 @@ export default function FishingModulePage() {
 
       </div>
 
+      {/* RAPOR DETAY MODALI */}
       {activeDetailReport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-cyan-500/40 w-full max-w-lg rounded-2xl p-6 relative shadow-2xl text-white space-y-4 my-auto max-h-[90vh] overflow-y-auto">
+          <div className="bg-slate-900 border border-cyan-500/40 w-full max-w-lg rounded-2xl p-5 sm:p-6 relative shadow-2xl text-white space-y-4 my-auto max-h-[90vh] overflow-y-auto">
             
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-cyan-400 flex items-center gap-1">
                   <MapPin className="w-4 h-4" /> {activeDetailReport.locationName}
                 </span>
-                <span className="text-[10px] text-slate-400">• Avcı: {activeDetailReport.author}</span>
+                <span className="text-[10px] text-slate-400">• {activeDetailReport.author}</span>
               </div>
               <button 
                 onClick={() => setActiveDetailReport(null)}
@@ -382,12 +429,12 @@ export default function FishingModulePage() {
               <h2 className="text-base font-bold text-white">{activeDetailReport.title}</h2>
 
               {activeDetailReport.imageUrl && (
-                <div className="w-full h-56 rounded-xl overflow-hidden border border-slate-800">
+                <div className="w-full h-48 sm:h-56 rounded-xl overflow-hidden border border-slate-800">
                   <img src={activeDetailReport.imageUrl} alt="Rapor Detayı" className="w-full h-full object-cover" />
                 </div>
               )}
 
-              <p className="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
                 {activeDetailReport.content}
               </p>
 
@@ -444,6 +491,7 @@ export default function FishingModulePage() {
         </div>
       )}
 
+      {/* Rapor Ekleme Modalı */}
       <AddReportModal 
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setSelectedCoords(null); }}
@@ -452,6 +500,7 @@ export default function FishingModulePage() {
         selectedCoords={selectedCoords}
       />
 
+      {/* Bilgilendirme Modalı */}
       {isInfoModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-cyan-500/30 w-full max-w-md rounded-2xl p-6 relative shadow-2xl text-white space-y-4">
@@ -468,20 +517,20 @@ export default function FishingModulePage() {
               </button>
             </div>
 
-            <div className="space-y-3 text-xs text-slate-300 leading-relaxed font-medium">
+            <div className="space-y-3 text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
               <div className="flex items-start gap-3 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
                 <span className="w-5 h-5 rounded-full bg-cyan-500/10 text-cyan-400 font-bold flex items-center justify-center shrink-0 border border-cyan-500/30">1</span>
                 <div>
-                  <strong className="text-white block mb-0.5">Serbest Rapor Paylaşımı</strong>
-                  Siteye gelen herkes haritadan konum seçerek veya "Rapor Ekle" butonuna basarak anında mera raporu paylaşabilir.
+                  <strong className="text-white block mb-0.5">Mobil Görünüm</strong>
+                  Üstteki sekmeleri kullanarak Harita, Güncel Akış ve Arşiv arasında kolayca geçiş yapabilirsiniz.
                 </div>
               </div>
 
               <div className="flex items-start gap-3 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
                 <span className="w-5 h-5 rounded-full bg-cyan-500/10 text-cyan-400 font-bold flex items-center justify-center shrink-0 border border-cyan-500/30">2</span>
                 <div>
-                  <strong className="text-white block mb-0.5">Sol Sütun & Arşiv</strong>
-                  En güncel 10 rapor sol üstte listelenir. Yeni rapor eklendikçe eskiyenler sağ sütundaki arşive kayar. Raporlar 24 saat sonra silinir.
+                  <strong className="text-white block mb-0.5">Rapor Paylaşımı</strong>
+                  "Rapor Ekle" butonuyla veya haritadan konum seçerek anında rapor yayınlayabilirsiniz.
                 </div>
               </div>
             </div>
@@ -489,7 +538,7 @@ export default function FishingModulePage() {
             <div className="pt-2 flex justify-end">
               <button 
                 onClick={() => setIsInfoModalOpen(false)}
-                className="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-colors cursor-pointer shadow-lg shadow-cyan-600/20"
+                className="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-colors cursor-pointer shadow-lg"
               >
                 Anladım, Kapat
               </button>
