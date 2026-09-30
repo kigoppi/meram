@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -68,9 +68,21 @@ interface MushroomReport {
 
 interface MushroomMapProps {
   reports?: MushroomReport[];
+  onMapClick?: (coords: { lat: number; lng: number }) => void;
 }
 
-export default function MushroomMap({ reports = [] }: MushroomMapProps) {
+function MapClickHandler({ onMapClick }: { onMapClick?: (coords: { lat: number; lng: number }) => void }) {
+  useMapEvents({
+    click(e) {
+      if (onMapClick) {
+        onMapClick({ lat: e.latlng.lat, lng: e.latlng.lng });
+      }
+    },
+  });
+  return null;
+}
+
+export default function MushroomMap({ reports = [], onMapClick }: MushroomMapProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -109,6 +121,8 @@ export default function MushroomMap({ reports = [] }: MushroomMapProps) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        <MapClickHandler onMapClick={onMapClick} />
 
         {reports.map((report) => {
           if (!report.coordinates) return null;

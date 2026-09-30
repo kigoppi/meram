@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Loader2 } from 'lucide-react';
@@ -16,15 +16,10 @@ const getReportBadgeStyle = (createdAt?: number) => {
   const reportTime = createdAt || now;
   const diffMinutes = (now - reportTime) / (1000 * 60);
 
-  if (diffMinutes <= 1) {
-    return { borderColor: '#ef4444' };
-  } else if (diffMinutes <= 30) {
-    return { borderColor: '#f59e0b' };
-  } else if (diffMinutes <= 60) {
-    return { borderColor: '#10b981' };
-  } else {
-    return { borderColor: '#38bdf8' };
-  }
+  if (diffMinutes <= 1) return { borderColor: '#ef4444' };
+  if (diffMinutes <= 30) return { borderColor: '#f59e0b' };
+  if (diffMinutes <= 60) return { borderColor: '#10b981' };
+  return { borderColor: '#38bdf8' };
 };
 
 const createCompactReportBadge = (trustScore: number, createdAt?: number) => {
@@ -77,6 +72,7 @@ interface InteractiveMapProps {
   reports?: Report[];
   showWeatherLayer?: boolean;
   onWeatherLayerToggle?: (show: boolean) => void;
+  onMapClick?: (coords: { lat: number; lng: number }) => void;
 }
 
 interface WeatherData {
@@ -128,8 +124,18 @@ const WEATHER_POINTS = [
   { id: 'hat-iskenderun', name: 'Hatay / İskenderun', lat: 36.5872, lng: 36.1736, hasSea: true }
 ];
 
+function MapClickHandler({ onMapClick }: { onMapClick?: (coords: { lat: number; lng: number }) => void }) {
+  useMapEvents({
+    click(e) {
+      if (onMapClick) {
+        onMapClick({ lat: e.latlng.lat, lng: e.latlng.lng });
+      }
+    },
+  });
+  return null;
+}
 
-export default function InteractiveMap({ reports = [], showWeatherLayer = false, onWeatherLayerToggle }: InteractiveMapProps) {
+export default function InteractiveMap({ reports = [], showWeatherLayer = false, onWeatherLayerToggle, onMapClick }: InteractiveMapProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [weatherMap, setWeatherMap] = useState<Record<string, WeatherData>>({});
   const [isLoadingWeather, setIsLoadingWeather] = useState(false);
@@ -251,6 +257,8 @@ export default function InteractiveMap({ reports = [], showWeatherLayer = false,
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        <MapClickHandler onMapClick={onMapClick} />
 
         {showWeatherLayer && WEATHER_POINTS.map((pt) => {
           const liveData = weatherMap[pt.id] || { temp: '...', seaTemp: '...', wind: '...' };
