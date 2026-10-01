@@ -236,7 +236,7 @@ export default function FishingModulePage() {
               <h1 className="text-xs sm:text-sm font-black tracking-wide bg-gradient-to-r from-white via-cyan-200 to-cyan-400 bg-clip-text text-transparent truncate max-w-[110px] sm:max-w-none">
                 BALIKÇILIK DÜNYASI
               </h1>
-              <p className="text-[8px] sm:text-[9px] text-cyan-500/80 font-medium tracking-wider uppercase hidden sm:block">Canlı Bulut Mera Ağı</p>
+              <p className="text-[8px] sm:text-[9px] text-cyan-500/80 font-medium tracking-wider uppercase hidden sm:block">Bildirim Platformu</p>
             </div>
           </div>
         </div>
@@ -361,7 +361,7 @@ export default function FishingModulePage() {
           <div className="p-3.5 border-b border-cyan-900/20 bg-[#030712]/90 shrink-0 hidden lg:flex items-center justify-between">
             <h2 className="text-xs font-black tracking-wider uppercase text-cyan-400 flex items-center gap-1.5">
               <Compass className="w-3 h-3 text-cyan-400 animate-spin-slow" />
-              <span>Diğer Raporlar (Arşiv)</span>
+              <span>Diğer Raporlar</span>
             </h2>
             <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-bold">
               {olderReports.length}

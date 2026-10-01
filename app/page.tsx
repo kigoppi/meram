@@ -43,7 +43,7 @@ export default function HomePage() {
 
             <div className="space-y-2">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-950/80 text-cyan-400 border border-cyan-800/60 text-[10px] font-bold uppercase tracking-wider">
-                <Waves className="w-3 h-3" /> Deniz & Sahil Modülü
+                <Waves className="w-3 h-3" /> Balıkçılık
               </div>
               <h2 className="text-xl font-extrabold text-white group-hover:text-cyan-300 transition-colors">
                 Balıkçılık Dünyası
@@ -57,7 +57,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between mt-8 pt-4 border-t border-cyan-950 relative z-10">
             <span className="text-xs text-slate-400 font-medium">Harita & Canlı Akış</span>
             <div className="flex items-center gap-2 text-xs font-bold text-cyan-400 group-hover:translate-x-1 transition-transform">
-              <span>Balıkçılık Modülüne Gir</span>
+              <span>Balık Avına İlerle</span>
               <ArrowRight className="w-4 h-4" />
             </div>
           </div>
@@ -79,21 +79,21 @@ export default function HomePage() {
 
             <div className="space-y-2">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#261d15] text-amber-400 border border-[#3d2e24] text-[10px] font-bold uppercase tracking-wider">
-                <Compass className="w-3 h-3" /> Orman & Mera Modülü
+                <Compass className="w-3 h-3" /> Mantar Avı
               </div>
               <h2 className="text-xl font-extrabold text-[#f4eee6] group-hover:text-amber-200 transition-colors">
                 Mantar Avı Dünyası
               </h2>
               <p className="text-xs sm:text-sm text-[#d4c5b9] leading-relaxed font-medium">
-                Canlı orman haritaları, mantar türü raporları, zemin nem durumu ve taze av bölgesi paylaşımları.
+                Mera durumu, mantar türü raporları ve anlık mantar avı paylaşımları.
               </p>
             </div>
           </div>
 
           <div className="flex items-center justify-between mt-8 pt-4 border-t border-[#32261e] relative z-10">
-            <span className="text-xs text-[#a8998e] font-medium">Orman Haritası & Arşiv</span>
+            <span className="text-xs text-[#a8998e] font-medium">Harita & Bildirimler</span>
             <div className="flex items-center gap-2 text-xs font-bold text-amber-400 group-hover:translate-x-1 transition-transform">
-              <span>Mantar Modülüne Gir</span>
+              <span>Mantar Avına İlerle</span>
               <ArrowRight className="w-4 h-4" />
             </div>
           </div>

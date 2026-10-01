@@ -232,7 +232,7 @@ export default function MushroomModulePage() {
               <h1 className="text-xs sm:text-sm font-black tracking-wide bg-gradient-to-r from-[#f4eee6] via-amber-200 to-amber-500 bg-clip-text text-transparent truncate max-w-[120px] sm:max-w-none">
                 MANTAR AVI DÜNYASI
               </h1>
-              <p className="text-[8px] sm:text-[9px] text-amber-600/90 font-medium tracking-wider uppercase hidden sm:block">Canlı Bulut Orman Ağı</p>
+              <p className="text-[8px] sm:text-[9px] text-amber-600/90 font-medium tracking-wider uppercase hidden sm:block">Bildirim Platformu</p>
             </div>
           </div>
         </div>
@@ -352,7 +352,7 @@ export default function MushroomModulePage() {
           <div className="p-3.5 border-b border-[#32261e] bg-[#1c140d]/90 shrink-0 hidden lg:flex items-center justify-between">
             <h2 className="text-xs font-black tracking-wider uppercase text-amber-500 flex items-center gap-1.5">
               <Compass className="w-3 h-3 text-amber-500 animate-spin-slow" />
-              <span>Diğer Raporlar (Arşiv)</span>
+              <span>Diğer Raporlar</span>
             </h2>
             <span className="px-2 py-0.5 rounded-full bg-[#261d15] text-[#a8998e] border border-[#3d2e24] text-[10px] font-bold">
               {olderReports.length}
