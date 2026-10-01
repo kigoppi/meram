@@ -1,51 +1,68 @@
+'use class';
 'use client';
 
-import React, { useState } from 'react';
-import { X, MapPin, Upload, Navigation, Loader2, Compass, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, MapPin, Navigation, Image as ImageIcon, Trees } from 'lucide-react';
 
 interface AddMushroomReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddReport: (report: any) => void;
-  onStartMapSelection: () => void;
+  onStartMapSelection?: () => void;
   selectedCoords?: { lat: number; lng: number } | null;
 }
 
-export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, onStartMapSelection, selectedCoords }: AddMushroomReportModalProps) {
+const MUSHROOM_SPECIES = [
+  'Kanlıca Mantarı (Çintar)', 'Kuzu Göbeği', 'İstiridye Mantarı', 
+  'Porçini (Ayı Mantarı)', 'Çörek Mantarı', 'Yenilebilir Diğer', 'Şüpheli / Bilinmiyor'
+];
+
+export default function AddMushroomReportModal({
+  isOpen,
+  onClose,
+  onAddReport,
+  onStartMapSelection,
+  selectedCoords
+}: AddMushroomReportModalProps) {
   const [title, setTitle] = useState('');
   const [locationName, setLocationName] = useState('');
+  const [species, setSpecies] = useState('Kanlıca Mantarı (Çintar)');
   const [content, setContent] = useState('');
-  const [species, setSpecies] = useState('');         
-  const [imagePreview, setImagePreview] = useState('');
-  
+  const [imageUrl, setImageUrl] = useState('');
   const [isGettingLocation, setIsGettingLocation] = useState(false);
-  const [locationError, setLocationError] = useState('');
-  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [localCoords, setLocalCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    if (selectedCoords) {
+      setLocalCoords(selectedCoords);
+    }
+  }, [selectedCoords]);
 
   if (!isOpen) return null;
 
-  const handleGetDeviceLocation = () => {
-    setIsGettingLocation(true);
-    setLocationError('');
-
+  const handleGetGPSLocation = () => {
     if (!navigator.geolocation) {
-      setLocationError('Tarayıcınız konum servislerini desteklemiyor.');
-      setIsGettingLocation(false);
+      alert('Tarayıcınız konum servislerini desteklemiyor.');
       return;
     }
 
+    setIsGettingLocation(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
-        setGpsCoords(coords);
+        const coords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        setLocalCoords(coords);
         setIsGettingLocation(false);
+        alert('GPS Konumunuz başarıyla alındı!');
       },
       (error) => {
-        console.error('GPS Hatası:', error);
-        setLocationError('GPS konumu alınamadı. Lütfen "Haritadan Seç" seçeneğini kullanın.');
+        console.error(error);
         setIsGettingLocation(false);
+        alert('Konum alınamadı. Lütfen konum izinlerini kontrol edin veya haritadan seçin.');
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   };
 
@@ -54,192 +71,183 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, o
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+        setImageUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const finalActiveCoords = gpsCoords || selectedCoords;
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !locationName.trim() || !finalActiveCoords) return;
+
+    // Fotoğraf zorunluluğu kontrolü
+    if (!imageUrl) {
+      alert('Lütfen mantar bulduğunuz alana ait bir fotoğraf yükleyin.');
+      return;
+    }
+
+    if (!localCoords) {
+      alert('Lütfen GPS ile veya Haritadan tıklayarak bir konum belirleyin.');
+      return;
+    }
 
     const newReport = {
-      id: Date.now().toString(),
-      title: title.trim(),
-      locationName: locationName.trim(),
-      content: content.trim() || 'Ek açıklama girilmedi.',
+      id: Math.random().toString(36).substring(2, 9),
+      title: title || `${species} Bulundu`,
+      locationName: locationName || 'Çamlık Ormanlık Alan',
       author: 'Gezgin Avcı',
       trustScore: 85,
-      upvotes: 3,
+      content: content || 'Yağmur sonrasında oldukça bereketli bir meraydı.',
+      upvotes: 0,
       downvotes: 0,
-      status: 'verified',
+      status: 'pending',
       createdAt: Date.now(),
-      coordinates: finalActiveCoords, 
-      imageUrl: imagePreview || '',
+      coordinates: localCoords,
+      imageUrl,
       mushroomData: {
-        species: species.trim() || 'Kanlıca Mantarı',
+        species,
         forestType: 'Ormanlık Alan',
         soilCondition: 'Nemli / Yağmur Sonrası'
       }
     };
 
     onAddReport(newReport);
-    setTitle('');
-    setLocationName('');
-    setContent('');
-    setSpecies('');
-    setImagePreview('');
-    setGpsCoords(null);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-[#1c140d] border border-amber-700/40 w-full max-w-md rounded-2xl p-5 sm:p-6 relative shadow-2xl text-[#f4eee6] space-y-4 my-auto max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
+      <div className="bg-[#1c140d] border border-amber-700/40 w-full max-w-lg rounded-2xl p-5 sm:p-6 relative shadow-2xl text-[#f4eee6] space-y-4 my-auto">
         
         <div className="flex items-center justify-between border-b border-[#32261e] pb-3">
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-amber-500" />
-            <span>Yeni Mantar Avı Raporu Ekle</span>
-          </h2>
-          <button onClick={onClose} className="p-1 rounded-lg bg-[#261d15] hover:bg-[#36291e] text-[#a8998e] hover:text-white transition-colors cursor-pointer">
+          <div className="flex items-center gap-2">
+            <span className="p-2 rounded-xl bg-amber-950/60 text-amber-500 border border-amber-800/40">
+              <Trees className="w-4 h-4" />
+            </span>
+            <div>
+              <h2 className="text-sm font-black tracking-wide text-white uppercase">Yeni Mantar Avı Raporu</h2>
+              <p className="text-[10px] text-amber-500 font-medium">Mera ve tür bilgisini doğa dostlarıyla paylaş</p>
+            </div>
+          </div>
+          <button 
+            onClick={onClose}
+            className="p-1.5 rounded-lg bg-[#261d15] hover:bg-[#36291e] text-[#a8998e] hover:text-white transition-colors cursor-pointer"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
-          <div>
-            <label className="block text-[#d4c5b9] font-medium mb-1">Rapor Başlığı *</label>
+          
+          <div className="space-y-1">
+            <label className="text-[#d4c5b9] font-bold block">Rapor Başlığı</label>
             <input 
               type="text" 
               required
-              placeholder="Örn: Bolu Çamlıklarında Bol Kanlıca Çıktı" 
+              placeholder="Örn: Çam Ormanı Derinliklerinde Çintar Bol"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-[#16110e] border border-[#32261e] rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-600"
+              className="w-full bg-[#16110e] border border-[#32261e] rounded-xl px-3 py-2 text-white focus:border-amber-600 focus:outline-none"
             />
           </div>
 
-          <div>
-            <label className="block text-[#d4c5b9] font-medium mb-1">Orman / Mera Konum Adı *</label>
-            <input 
-              type="text" 
-              required
-              placeholder="Örn: Abant Ormanları Girişi" 
-              value={locationName}
-              onChange={(e) => setLocationName(e.target.value)}
-              className="w-full bg-[#16110e] border border-[#32261e] rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-600"
-            />
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-[#d4c5b9] font-bold block">Bölge / Orman Adı</label>
+              <input 
+                type="text" 
+                required
+                placeholder="Örn: Belgrad Ormanı Girişi"
+                value={locationName}
+                onChange={(e) => setLocationName(e.target.value)}
+                className="w-full bg-[#16110e] border border-[#32261e] rounded-xl px-3 py-2 text-white focus:border-amber-600 focus:outline-none"
+              />
+            </div>
 
-          {/* Konum Belirleme Yöntemleri (Garanti Görünür) */}
-          <div className={`p-3.5 rounded-xl border space-y-3 ${finalActiveCoords ? 'bg-[#16110e] border-emerald-600/50' : 'bg-amber-950/20 border-amber-600/40'}`}>
-            <span className="text-[#d4c5b9] font-medium block">
-              Konum Belirleme Yöntemi <span className="text-amber-500">*Zorunlu</span>
-            </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={handleGetDeviceLocation}
-                disabled={isGettingLocation}
-                className="py-2.5 px-3 rounded-xl bg-amber-700 hover:bg-amber-600 text-white font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50 shadow-md text-xs w-full"
+            <div className="space-y-1">
+              <label className="text-[#d4c5b9] font-bold block">Mantar Türü</label>
+              <select 
+                value={species}
+                onChange={(e) => setSpecies(e.target.value)}
+                className="w-full bg-[#16110e] border border-[#32261e] rounded-xl px-3 py-2 text-white focus:border-amber-600 focus:outline-none"
               >
-                {isGettingLocation ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
-                <span>Konumdan Al (GPS)</span>
+                {MUSHROOM_SPECIES.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[#d4c5b9] font-bold block">Konum Seçimi <span className="text-rose-400">*</span></label>
+            <div className="grid grid-cols-2 gap-2">
+              <button 
+                type="button"
+                onClick={handleGetGPSLocation}
+                disabled={isGettingLocation}
+                className="py-2 px-3 rounded-xl bg-[#261d15] hover:bg-[#36291e] border border-[#3d2e24] text-amber-400 font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Navigation className="w-3.5 h-3.5" />
+                <span>{isGettingLocation ? 'Alınıyor...' : 'GPS Konumum'}</span>
               </button>
 
-              <button
+              <button 
                 type="button"
                 onClick={onStartMapSelection}
-                className="py-2.5 px-3 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md text-xs w-full"
+                className="py-2 px-3 rounded-xl bg-amber-950/40 hover:bg-amber-900/60 border border-amber-800/40 text-amber-300 font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
               >
-                <Compass className="w-4 h-4" />
+                <MapPin className="w-3.5 h-3.5" />
                 <span>Haritadan Seç</span>
               </button>
             </div>
-
-            {finalActiveCoords ? (
-              <p className="text-[10px] text-emerald-400 font-mono text-center">
-                ✓ Konum Seçildi: {finalActiveCoords.lat.toFixed(4)}, {finalActiveCoords.lng.toFixed(4)}
-              </p>
-            ) : (
-              <p className="text-[10px] text-amber-400 flex items-center justify-center gap-1 text-center">
-                <AlertCircle className="w-3 h-3 shrink-0" /> Lütfen yukarıdan bir yöntem seçin.
-              </p>
-            )}
-
-            {locationError && (
-              <p className="text-[10px] text-rose-400 text-center font-medium bg-rose-950/50 p-1.5 rounded">
-                {locationError}
+            {localCoords && (
+              <p className="text-[10px] text-emerald-400 font-medium pt-1">
+                ✓ Konum Seçildi ({localCoords.lat.toFixed(4)}, {localCoords.lng.toFixed(4)})
               </p>
             )}
           </div>
 
-          <div>
-            <label className="block text-[#d4c5b9] font-medium mb-1">Mantar Türü</label>
-            <input 
-              type="text" 
-              placeholder="Örn: Kuzu Göbeği / Kanlıca" 
-              value={species}
-              onChange={(e) => setSpecies(e.target.value)}
-              className="w-full bg-[#16110e] border border-[#32261e] rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-amber-600"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[#d4c5b9] font-medium mb-1">Mantar Fotoğrafı Yükle</label>
-            <div className="flex items-center gap-3">
-              <label className="flex-1 flex items-center justify-center gap-2 bg-[#16110e] border border-dashed border-amber-700/50 hover:border-amber-500 rounded-xl px-3 py-3 text-[#d4c5b9] hover:text-white cursor-pointer transition-colors">
-                <Upload className="w-4 h-4 text-amber-500" />
-                <span className="truncate">{imagePreview ? 'Fotoğraf Seçildi (Değiştir)' : 'Cihazdan Fotoğraf Seç'}</span>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
+          <div className="space-y-1">
+            <label className="text-[#d4c5b9] font-bold block">Fotoğraf Yükle <span className="text-rose-400">* (Zorunlu)</span></label>
+            <div className="flex items-center gap-3 bg-[#16110e] border border-[#32261e] rounded-xl p-2.5">
+              <label className="cursor-pointer bg-amber-700 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-1.5">
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span>Dosya Seç</span>
+                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
               </label>
-              {imagePreview && (
-                <div className="w-12 h-12 rounded-xl border border-amber-700/50 overflow-hidden shrink-0 relative">
-                  <img src={imagePreview} alt="Önizleme" className="w-full h-full object-cover" />
-                </div>
-              )}
+              <span className="text-[11px] text-[#a8998e] truncate">
+                {imageUrl ? '✓ Fotoğraf yüklendi' : 'Fotoğraf seçilmedi'}
+              </span>
             </div>
           </div>
 
-          <div>
-            <label className="block text-[#d4c5b9] font-medium mb-1">Detaylar / Arazi Notları</label>
+          <div className="space-y-1">
+            <label className="text-[#d4c5b9] font-bold block">Açıklama / Detaylar</label>
             <textarea 
-              rows={3}
-              placeholder="Zemin nemi, toplama yüksekliği vb. detaylar..." 
+              rows={2}
+              placeholder="Ormanın nem durumu, ağaç türü (çam, meşe vb.) hakkında bilgi verin..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full bg-[#16110e] border border-[#32261e] rounded-xl p-3 text-white focus:outline-none focus:border-amber-600 resize-none"
+              className="w-full bg-[#16110e] border border-[#32261e] rounded-xl px-3 py-2 text-white focus:border-amber-600 focus:outline-none resize-none"
             />
           </div>
 
-          <div className="pt-2 flex justify-end gap-2">
+          <div className="pt-2 flex items-center justify-end gap-2">
             <button 
-              type="button" 
+              type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-[#261d15] hover:bg-[#36291e] text-[#d4c5b9] transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-[#261d15] hover:bg-[#36291e] text-[#d4c5b9] font-medium transition-colors cursor-pointer"
             >
               İptal
             </button>
             <button 
               type="submit"
-              disabled={!finalActiveCoords}
-              className={`px-5 py-2 rounded-xl font-bold transition-all shadow-lg ${
-                finalActiveCoords ? 'bg-gradient-to-r from-amber-700 to-emerald-800 text-white cursor-pointer' : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
-              }`}
+              className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-700 to-yellow-700 hover:from-amber-600 hover:to-yellow-600 text-white font-bold shadow-lg shadow-amber-950/50 transition-all cursor-pointer"
             >
-              {finalActiveCoords ? 'Raporu Yayınla' : 'Konum Seçilmedi'}
+              Raporu Yayınla
             </button>
           </div>
+
         </form>
 
       </div>
