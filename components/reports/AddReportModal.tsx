@@ -69,10 +69,11 @@ export default function AddReportModal({ isOpen, onClose, onAddReport, onStartMa
   };
 
   const finalActiveCoords = gpsCoords || selectedCoords;
+  const isFormValid = title.trim() && locationName.trim() && finalActiveCoords && imagePreview;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !locationName.trim() || !finalActiveCoords) return;
+    if (!isFormValid) return;
 
     const newReport = {
       id: Date.now().toString(),
@@ -86,7 +87,7 @@ export default function AddReportModal({ isOpen, onClose, onAddReport, onStartMa
       status: 'verified',
       createdAt: Date.now(),
       coordinates: finalActiveCoords,
-      imageUrl: imagePreview || '',
+      imageUrl: imagePreview,
       subData: {
         fishType: selectedFish.trim() || 'Lüfer',
         lure: lureField.trim() || 'Rapala + Kurşun'
@@ -143,7 +144,7 @@ export default function AddReportModal({ isOpen, onClose, onAddReport, onStartMa
             />
           </div>
 
-          {/* Konum Belirleme Yöntemleri (Garanti Görünür) */}
+          {/* Konum Belirleme Yöntemleri */}
           <div className={`p-3.5 rounded-xl border space-y-3 ${finalActiveCoords ? 'bg-slate-950 border-emerald-600/50' : 'bg-cyan-950/20 border-cyan-600/40'}`}>
             <span className="text-slate-300 font-medium block">
               Konum Belirleme Yöntemi <span className="text-cyan-400">*Zorunlu</span>
@@ -176,7 +177,7 @@ export default function AddReportModal({ isOpen, onClose, onAddReport, onStartMa
               </p>
             ) : (
               <p className="text-[10px] text-cyan-400 flex items-center justify-center gap-1 text-center">
-                <AlertCircle className="w-3 h-3 shrink-0" /> Lütfen yukarıdan bir yöntem seçin.
+                <AlertCircle className="w-3 h-3 shrink-0" /> Lütfen yukarıdan bir konum yöntemi seçin.
               </p>
             )}
 
@@ -217,11 +218,13 @@ export default function AddReportModal({ isOpen, onClose, onAddReport, onStartMa
           </div>
 
           <div>
-            <label className="block text-slate-300 font-medium mb-1">Mera Fotoğrafı Yükle</label>
+            <label className="block text-slate-300 font-medium mb-1">
+              Mera Fotoğrafı Yükle <span className="text-rose-400">*Zorunlu</span>
+            </label>
             <div className="flex items-center gap-3">
-              <label className="flex-1 flex items-center justify-center gap-2 bg-slate-950 border border-dashed border-cyan-800 hover:border-cyan-500 rounded-xl px-3 py-3 text-slate-300 hover:text-white cursor-pointer transition-colors">
+              <label className={`flex-1 flex items-center justify-center gap-2 bg-slate-950 border border-dashed rounded-xl px-3 py-3 text-slate-300 hover:text-white cursor-pointer transition-colors ${imagePreview ? 'border-emerald-600/80 text-emerald-400' : 'border-cyan-800 hover:border-cyan-500'}`}>
                 <Upload className="w-4 h-4 text-cyan-400" />
-                <span className="truncate">{imagePreview ? 'Fotoğraf Seçildi (Değiştir)' : 'Cihazdan Fotoğraf Seç'}</span>
+                <span className="truncate">{imagePreview ? '✓ Fotoğraf Yüklendi (Değiştir)' : 'Cihazdan Fotoğraf Seç'}</span>
                 <input 
                   type="file" 
                   accept="image/*" 
@@ -230,11 +233,14 @@ export default function AddReportModal({ isOpen, onClose, onAddReport, onStartMa
                 />
               </label>
               {imagePreview && (
-                <div className="w-12 h-12 rounded-xl border border-cyan-800 overflow-hidden shrink-0 relative">
+                <div className="w-12 h-12 rounded-xl border border-emerald-600/80 overflow-hidden shrink-0 relative">
                   <img src={imagePreview} alt="Önizleme" className="w-full h-full object-cover" />
                 </div>
               )}
             </div>
+            {!imagePreview && (
+              <p className="text-[10px] text-rose-400 mt-1">Rapor ekleyebilmek için fotoğraf seçmelisiniz.</p>
+            )}
           </div>
 
           <div>
@@ -258,12 +264,12 @@ export default function AddReportModal({ isOpen, onClose, onAddReport, onStartMa
             </button>
             <button 
               type="submit"
-              disabled={!finalActiveCoords}
+              disabled={!isFormValid}
               className={`px-5 py-2 rounded-xl font-bold transition-all shadow-lg ${
-                finalActiveCoords ? 'bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 text-white cursor-pointer' : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
+                isFormValid ? 'bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 text-white cursor-pointer' : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
               }`}
             >
-              {finalActiveCoords ? 'Raporu Yayınla' : 'Konum Seçilmedi'}
+              {isFormValid ? 'Raporu Yayınla' : 'Eksik Alan Var'}
             </button>
           </div>
         </form>
