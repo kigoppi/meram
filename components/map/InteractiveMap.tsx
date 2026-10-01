@@ -4,12 +4,56 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sun, CloudRain, Cloud, CloudLightning, Snowflake, Wind } from 'lucide-react';
 
 const TURKEY_BOUNDS = L.latLngBounds(
   [35.0, 25.0],
   [43.0, 46.0]
 );
+
+// Hava durumuna göre akıllı ikon döndüren yardımcı fonksiyon
+const getWeatherBadgeHTML = (tempStr: string, conditionText: string = '') => {
+  const text = conditionText.toLowerCase();
+  let emoji = '☀️';
+  let color = '#facc15'; // Sarı
+
+  if (text.includes('yağmur') || text.includes('sağanak') || text.includes('çisenti')) {
+    emoji = '🌧️';
+    color = '#60a5fa'; // Mavi
+  } else if (text.includes('bulut') || text.includes('kapalı')) {
+    emoji = '☁️';
+    color = '#94a3b8'; // Gri
+  } else if (text.includes('fırtına') || text.includes('şimşek')) {
+    emoji = '⚡';
+    color = '#fbbf24'; // Turuncu/Sarı
+  } else if (text.includes('kar')) {
+    emoji = '❄️';
+    color = '#93c5fd'; // Açık Mavi
+  } else if (text.includes('rüzgar')) {
+    emoji = '🌬️';
+    color = '#2dd4bf'; // Teal
+  }
+
+  return `
+    <div style="
+      background: rgba(15, 23, 42, 0.95); 
+      color: #ffffff; 
+      border: 1px solid rgba(56, 189, 248, 0.4); 
+      padding: 4px 10px; 
+      border-radius: 9999px; 
+      font-size: 11px; 
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      white-space: nowrap;
+    ">
+      <span style="font-size: 13px;">${emoji}</span>
+      <span style="color: ${color};">${tempStr}</span>
+    </div>
+  `;
+};
 
 const getReportBadgeStyle = (createdAt?: number) => {
   const now = Date.now();
@@ -79,6 +123,7 @@ interface WeatherData {
   temp: string;
   seaTemp: string;
   wind: string;
+  conditionText: string;
 }
 
 const WEATHER_POINTS = [
@@ -158,7 +203,7 @@ export default function InteractiveMap({ reports = [], showWeatherLayer = false,
           WEATHER_POINTS.map(async (pt) => {
             try {
               const res = await fetch(
-                `https://api.open-meteo.com/v1/forecast?latitude=${pt.lat}&longitude=${pt.lng}&current=temperature_2m,wind_speed_10m`
+                `https://api.open-meteo.com/v1/forecast?latitude=${pt.lat}&longitude=${pt.lng}&current=temperature_2m,wind_speed_10m,weather_code`
               );
               const data = await res.json();
 
@@ -176,14 +221,26 @@ export default function InteractiveMap({ reports = [], showWeatherLayer = false,
 
               const t = data?.current?.temperature_2m;
               const w = data?.current?.wind_speed_10m;
+              const wCode = data?.current?.weather_code;
+
+              // WMO weather code çevirisi
+              let condStr = 'Açık / Güneşli';
+              if (wCode !== undefined) {
+                if ([1, 2, 3].includes(wCode)) condStr = 'Parçalı Bulutlu';
+                else if ([45, 48].includes(wCode)) condStr = 'Sisli';
+                else if ([51, 53, 55, 56, 57, 61, 63, 65, 80, 81, 82].includes(wCode)) condStr = 'Yağmurlu';
+                else if ([71, 73, 75, 77, 85, 86].includes(wCode)) condStr = 'Karlı';
+                else if ([95, 96, 99].includes(wCode)) condStr = 'Fırtınalı';
+              }
 
               results[pt.id] = {
                 temp: t !== undefined && t !== null ? `${Math.round(t)}°C` : '19°C',
                 seaTemp: seaStr,
-                wind: w !== undefined && w !== null ? `${Math.round(w)} km/s` : '12 km/s'
+                wind: w !== undefined && w !== null ? `${Math.round(w)} km/s` : '12 km/s',
+                conditionText: condStr
               };
             } catch {
-              results[pt.id] = { temp: '19°C', seaTemp: pt.hasSea ? '17°C' : '---', wind: '12 km/s' };
+              results[pt.id] = { temp: '19°C', seaTemp: pt.hasSea ? '17°C' : '---', wind: '12 km/s', conditionText: 'Açık' };
             }
           })
         );
@@ -261,12 +318,12 @@ export default function InteractiveMap({ reports = [], showWeatherLayer = false,
         <MapClickHandler onMapClick={onMapClick} />
 
         {showWeatherLayer && WEATHER_POINTS.map((pt) => {
-          const liveData = weatherMap[pt.id] || { temp: '...', seaTemp: '...', wind: '...' };
+          const liveData = weatherMap[pt.id] || { temp: '...', seaTemp: '...', wind: '...', conditionText: 'Açık' };
           const weatherBadgeIcon = L.divIcon({
             className: 'weather-only-badge',
-            html: `<div style="background: rgba(15, 23, 42, 0.95); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 3px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600;">🌤️ ${liveData.temp}</div>`,
-            iconSize: [65, 24],
-            iconAnchor: [32, 12]
+            html: getWeatherBadgeHTML(liveData.temp, liveData.conditionText),
+            iconSize: [75, 26],
+            iconAnchor: [37, 13]
           });
 
           return (
@@ -275,7 +332,8 @@ export default function InteractiveMap({ reports = [], showWeatherLayer = false,
                 <div className="p-2 text-slate-900 space-y-1.5 min-w-[160px]">
                   <h4 className="font-bold text-sm border-b pb-1">📍 {pt.name}</h4>
                   <div className="text-xs space-y-1 pt-1 font-medium">
-                    <div className="flex justify-between items-center"><span className="text-slate-600">Hava:</span><span className="font-bold">{liveData.temp}</span></div>
+                    <div className="flex justify-between items-center"><span className="text-slate-600">Durum:</span><span className="font-bold text-cyan-700">{liveData.conditionText}</span></div>
+                    <div className="flex justify-between items-center"><span className="text-slate-600">Sıcaklık:</span><span className="font-bold">{liveData.temp}</span></div>
                     {pt.hasSea && <div className="flex justify-between items-center"><span className="text-slate-600">Deniz:</span><span className="font-bold text-blue-600">{liveData.seaTemp}</span></div>}
                     <div className="flex justify-between items-center pt-0.5 border-t"><span className="text-slate-600">Rüzgar:</span><span className="font-semibold">{liveData.wind}</span></div>
                   </div>
