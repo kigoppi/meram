@@ -9,8 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
     "@emailjs/browser": "^4.4.1",
     "@supabase/supabase-js": "^2.117.2",
+    "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.48.0",
@@ -21,6 +24,8 @@
     "resend": "^6.31.0"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.2",
     "@tailwindcss/postcss": "^4",
     "@types/leaflet": "^1.9.22",
     "@types/node": "^20",
