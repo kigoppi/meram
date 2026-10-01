@@ -8,6 +8,7 @@ import {
   Compass, ArrowLeft, X, Clock, Sparkles, Waves, Info 
 } from 'lucide-react';
 import AddReportModal from '@/components/reports/AddReportModal';
+import { supabase } from '@/lib/supabase';
 
 const InteractiveMap = dynamic(
   () => import('@/components/map/InteractiveMap'),
@@ -54,105 +55,125 @@ export default function FishingModulePage() {
   const [activeDetailReport, setActiveDetailReport] = useState<Report | null>(null);
   const [mobileTab, setMobileTab] = useState<'map' | 'latest' | 'archive'>('map');
 
-  // Haritadan Seçim ve Koordinat Yönetimi
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
 
+  // Supabase'den Verileri Çekme ve Realtime Dinleme
   useEffect(() => {
-    const savedReports = localStorage.getItem('fishing_reports');
-    if (savedReports) {
-      try {
-        const parsed: Report[] = JSON.parse(savedReports);
-        const now = Date.now();
-        
-        const validReports = parsed.filter(rep => {
-          const createdAt = rep.createdAt || now;
-          const diffMs = now - createdAt;
-          const diffMinutes = diffMs / (1000 * 60);
+    fetchReportsFromSupabase();
 
-          if (diffMs > ONE_DAY_IN_MS) return false;
-          if (diffMinutes <= 5 && rep.downvotes > 30) return false;
+    // Canlı (Realtime) Senkronizasyon Aboneliği
+    const channel = supabase
+      .channel('public:fishing_reports')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'fishing_reports' }, () => {
+        fetchReportsFromSupabase();
+      })
+      .subscribe();
 
-          return true;
-        });
-
-        setReports(validReports);
-        localStorage.setItem('fishing_reports', JSON.stringify(validReports));
-      } catch (e) {
-        console.error('Kayıtlı raporlar okunamadı', e);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = Date.now();
-      setReports(prevReports => {
-        const filtered = prevReports.filter(rep => {
-          const createdAt = rep.createdAt || now;
-          const diffMs = now - createdAt;
-          const diffMinutes = diffMs / (1000 * 60);
-
-          if (diffMs > ONE_DAY_IN_MS) return false;
-          if (diffMinutes <= 5 && rep.downvotes > 30) return false;
-
-          return true;
-        });
-
-        if (filtered.length !== prevReports.length) {
-          localStorage.setItem('fishing_reports', JSON.stringify(filtered));
-        }
-
-        return filtered;
-      });
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const saveAndSetReports = (newReports: Report[]) => {
-    setReports(newReports);
-    localStorage.setItem('fishing_reports', JSON.stringify(newReports));
-  };
-
-  const handleVote = (id: string, type: 'up' | 'down') => {
-    const updated = reports.map(rep => {
-      if (rep.id === id) {
-        const newUpvotes = type === 'up' ? rep.upvotes + 1 : rep.upvotes;
-        const newDownvotes = type === 'down' ? rep.downvotes + 1 : rep.downvotes;
-        const totalVotes = newUpvotes + newDownvotes;
-        const calculatedTrust = totalVotes > 0 ? Math.round((newUpvotes / totalVotes) * 100) : 50;
-        const newStatus: 'verified' | 'pending' = calculatedTrust >= 70 ? 'verified' : 'pending';
-
-        const updatedRep: Report = {
-          ...rep,
-          upvotes: newUpvotes,
-          downvotes: newDownvotes,
-          trustScore: calculatedTrust,
-          status: newStatus
-        };
-
-        if (activeDetailReport?.id === id) {
-          setActiveDetailReport(updatedRep);
-        }
-
-        return updatedRep;
-      }
-      return rep;
-    });
-
-    saveAndSetReports(updated);
-  };
-
-  const handleAddNewReport = (newReport: Report) => {
-    const reportWithAuthor: Report = {
-      ...newReport,
-      author: 'Gezgin Avcı',
-      status: newReport.status || 'pending'
+    return () => {
+      supabase.removeChannel(channel);
     };
-    const updated = [reportWithAuthor, ...reports];
-    saveAndSetReports(updated);
+  }, []);
+
+  const fetchReportsFromSupabase = async () => {
+    const { data, error } = await supabase
+      .from('fishing_reports')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Raporlar çekilemedi:', error);
+      return;
+    }
+
+    if (data) {
+      const now = Date.now();
+      const formatted: Report[] = data.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        locationName: item.location_name,
+        author: item.author,
+        trustScore: item.trust_score,
+        content: item.content,
+        upvotes: item.upvotes,
+        downvotes: item.downvotes,
+        status: item.status,
+        createdAt: Number(item.created_at),
+        coordinates: item.lat && item.lng ? { lat: item.lat, lng: item.lng } : null,
+        imageUrl: item.image_url,
+        subData: {
+          fishType: item.fish_type,
+          lure: item.lure
+        }
+      }));
+
+      // 24 saat kuralı filtrelemesi
+      const validReports = formatted.filter(rep => {
+        const createdAt = rep.createdAt || now;
+        return (now - createdAt) <= ONE_DAY_IN_MS;
+      });
+
+      setReports(validReports);
+    }
+  };
+
+  const handleVote = async (id: string, type: 'up' | 'down') => {
+    const target = reports.find(r => r.id === id);
+    if (!target) return;
+
+    const newUpvotes = type === 'up' ? target.upvotes + 1 : target.upvotes;
+    const newDownvotes = type === 'down' ? target.downvotes + 1 : target.downvotes;
+    const totalVotes = newUpvotes + newDownvotes;
+    const calculatedTrust = totalVotes > 0 ? Math.round((newUpvotes / totalVotes) * 100) : 50;
+    const newStatus = calculatedTrust >= 70 ? 'verified' : 'pending';
+
+    const { error } = await supabase
+      .from('fishing_reports')
+      .update({
+        upvotes: newUpvotes,
+        downvotes: newDownvotes,
+        trust_score: calculatedTrust,
+        status: newStatus
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Oylama güncellenemedi:', error);
+      return;
+    }
+
+    fetchReportsFromSupabase();
+  };
+
+  const handleAddNewReport = async (newReport: Report) => {
+    const payload = {
+      id: newReport.id,
+      title: newReport.title,
+      location_name: newReport.locationName,
+      author: 'Gezgin Avcı',
+      trust_score: newReport.trustScore || 80,
+      content: newReport.content,
+      upvotes: newReport.upvotes || 0,
+      downvotes: newReport.downvotes || 0,
+      status: newReport.status || 'pending',
+      created_at: newReport.createdAt || Date.now(),
+      lat: newReport.coordinates?.lat || null,
+      lng: newReport.coordinates?.lng || null,
+      image_url: newReport.imageUrl || '',
+      fish_type: newReport.subData?.fishType || '',
+      lure: newReport.subData?.lure || ''
+    };
+
+    const { error } = await supabase.from('fishing_reports').insert([payload]);
+
+    if (error) {
+      console.error('Rapor eklenemedi:', error);
+      alert('Rapor buluta kaydedilirken bir hata oluştu.');
+      return;
+    }
+
     setSelectedCoords(null);
+    fetchReportsFromSupabase();
   };
 
   const handleStartMapSelection = () => {
@@ -169,11 +190,11 @@ export default function FishingModulePage() {
     }
   };
 
-  const getDisplayTime = (createdAt?: number, timeString?: string) => {
-    if (!createdAt) return timeString || 'Bilinmiyor';
+  const getDisplayTime = (createdAt?: number) => {
+    if (!createdAt) return 'Bilinmiyor';
     const diffMinutes = (Date.now() - createdAt) / (1000 * 60);
     if (diffMinutes <= 2) return 'Az önce';
-    return timeString || 'Bugün';
+    return 'Bugün';
   };
 
   const sortedReports = [...reports].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -215,7 +236,7 @@ export default function FishingModulePage() {
               <h1 className="text-xs sm:text-sm font-black tracking-wide bg-gradient-to-r from-white via-cyan-200 to-cyan-400 bg-clip-text text-transparent truncate max-w-[110px] sm:max-w-none">
                 BALIKÇILIK DÜNYASI
               </h1>
-              <p className="text-[8px] sm:text-[9px] text-cyan-500/80 font-medium tracking-wider uppercase hidden sm:block">Canlı Mera ve Rapor Ağı</p>
+              <p className="text-[8px] sm:text-[9px] text-cyan-500/80 font-medium tracking-wider uppercase hidden sm:block">Canlı Bulut Mera Ağı</p>
             </div>
           </div>
         </div>
@@ -287,7 +308,7 @@ export default function FishingModulePage() {
           <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar">
             {latestReports.length === 0 ? (
               <div className="text-center py-12 px-4 space-y-2 bg-slate-950/40 border border-slate-800/80 rounded-2xl">
-                <p className="text-xs text-slate-400">Henüz yeni rapor bulunmuyor.</p>
+                <p className="text-xs text-slate-400">Henüz bulutta rapor bulunmuyor.</p>
               </div>
             ) : (
               latestReports.map((report) => (
@@ -301,7 +322,7 @@ export default function FishingModulePage() {
                       <MapPin className="w-3 h-3 text-cyan-400 shrink-0" /> {report.locationName}
                     </span>
                     <span className="text-[10px] text-slate-400 font-medium">
-                      {getDisplayTime(report.createdAt, report.timeString)}
+                      {getDisplayTime(report.createdAt)}
                     </span>
                   </div>
 
@@ -364,7 +385,7 @@ export default function FishingModulePage() {
                       <MapPin className="w-3 h-3 text-cyan-400 shrink-0" /> {report.locationName}
                     </span>
                     <span className="text-[10px] text-slate-500 font-medium">
-                      {getDisplayTime(report.createdAt, report.timeString)}
+                      {getDisplayTime(report.createdAt)}
                     </span>
                   </div>
 
@@ -437,7 +458,7 @@ export default function FishingModulePage() {
 
               <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs text-slate-400">
                 <span className="flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-cyan-400" /> {getDisplayTime(activeDetailReport.createdAt, activeDetailReport.timeString)}
+                  <Clock className="w-3.5 h-3.5 text-cyan-400" /> {getDisplayTime(activeDetailReport.createdAt)}
                 </span>
                 <span className="text-emerald-400 font-bold">Güvenilirlik: %{activeDetailReport.trustScore}</span>
               </div>
@@ -502,16 +523,16 @@ export default function FishingModulePage() {
               <div className="flex items-start gap-3 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
                 <span className="w-5 h-5 rounded-full bg-cyan-500/10 text-cyan-400 font-bold flex items-center justify-center shrink-0 border border-cyan-500/30">1</span>
                 <div>
-                  <strong className="text-white block mb-0.5">Mobil Görünüm</strong>
-                  Üstteki sekmeleri kullanarak Harita, Güncel Akış ve Arşiv arasında kolayca geçiş yapabilirsiniz.
+                  <strong className="text-white block mb-0.5">Ortak Bulut Ağı</strong>
+                  Farklı cihazlardan bağlanan tüm kullanıcılar aynı anda birbirlerinin raporlarını haritada ve akışta görür.
                 </div>
               </div>
 
               <div className="flex items-start gap-3 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
                 <span className="w-5 h-5 rounded-full bg-cyan-500/10 text-cyan-400 font-bold flex items-center justify-center shrink-0 border border-cyan-500/30">2</span>
                 <div>
-                  <strong className="text-white block mb-0.5">Rapor Paylaşımı</strong>
-                  "Rapor Ekle" butonuyla GPS konumunuzu alabilir ya da "Haritadan Seç" ile dilediğiniz noktayı işaretleyebilirsiniz.
+                  <strong className="text-white block mb-0.5">Canlı Senkronizasyon</strong>
+                  Eklenen raporlar ve yapılan oylamalar sayfayı yenilemeye gerek kalmadan anında herkese yansır.
                 </div>
               </div>
             </div>

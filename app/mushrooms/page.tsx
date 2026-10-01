@@ -8,6 +8,7 @@ import {
   Compass, ArrowLeft, X, Clock, Sparkles, Waves, Info 
 } from 'lucide-react';
 import AddMushroomReportModal from '@/components/reports/AddMushroomReportModal';
+import { supabase } from '@/lib/supabase';
 
 const MushroomMap = dynamic(
   () => import('@/components/map/MushroomMap'),
@@ -53,105 +54,122 @@ export default function MushroomModulePage() {
   const [activeDetailReport, setActiveDetailReport] = useState<MushroomReport | null>(null);
   const [mobileTab, setMobileTab] = useState<'map' | 'latest' | 'archive'>('map');
 
-  // Haritadan Seçim ve Koordinat Yönetimi
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
 
   useEffect(() => {
-    const savedReports = localStorage.getItem('mushroom_reports');
-    if (savedReports) {
-      try {
-        const parsed: MushroomReport[] = JSON.parse(savedReports);
-        const now = Date.now();
-        
-        const validReports = parsed.filter(rep => {
-          const createdAt = rep.createdAt || now;
-          const diffMs = now - createdAt;
-          const diffMinutes = diffMs / (1000 * 60);
+    fetchReportsFromSupabase();
 
-          if (diffMs > ONE_DAY_IN_MS) return false;
-          if (diffMinutes <= 5 && rep.downvotes > 30) return false;
+    const channel = supabase
+      .channel('public:mushroom_reports')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'mushroom_reports' }, () => {
+        fetchReportsFromSupabase();
+      })
+      .subscribe();
 
-          return true;
-        });
-
-        setReports(validReports);
-        localStorage.setItem('mushroom_reports', JSON.stringify(validReports));
-      } catch (e) {
-        console.error('Kayıtlı mantar raporları okunamadı', e);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = Date.now();
-      setReports(prevReports => {
-        const filtered = prevReports.filter(rep => {
-          const createdAt = rep.createdAt || now;
-          const diffMs = now - createdAt;
-          const diffMinutes = diffMs / (1000 * 60);
-
-          if (diffMs > ONE_DAY_IN_MS) return false;
-          if (diffMinutes <= 5 && rep.downvotes > 30) return false;
-
-          return true;
-        });
-
-        if (filtered.length !== prevReports.length) {
-          localStorage.setItem('mushroom_reports', JSON.stringify(filtered));
-        }
-
-        return filtered;
-      });
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const saveAndSetReports = (newReports: MushroomReport[]) => {
-    setReports(newReports);
-    localStorage.setItem('mushroom_reports', JSON.stringify(newReports));
-  };
-
-  const handleVote = (id: string, type: 'up' | 'down') => {
-    const updated = reports.map(rep => {
-      if (rep.id === id) {
-        const newUpvotes = type === 'up' ? rep.upvotes + 1 : rep.upvotes;
-        const newDownvotes = type === 'down' ? rep.downvotes + 1 : rep.downvotes;
-        const totalVotes = newUpvotes + newDownvotes;
-        const calculatedTrust = totalVotes > 0 ? Math.round((newUpvotes / totalVotes) * 100) : 50;
-        const newStatus: 'verified' | 'pending' = calculatedTrust >= 70 ? 'verified' : 'pending';
-
-        const updatedRep: MushroomReport = {
-          ...rep,
-          upvotes: newUpvotes,
-          downvotes: newDownvotes,
-          trustScore: calculatedTrust,
-          status: newStatus
-        };
-
-        if (activeDetailReport?.id === id) {
-          setActiveDetailReport(updatedRep);
-        }
-
-        return updatedRep;
-      }
-      return rep;
-    });
-
-    saveAndSetReports(updated);
-  };
-
-  const handleAddNewReport = (newReport: MushroomReport) => {
-    const reportWithAuthor: MushroomReport = {
-      ...newReport,
-      author: 'Gezgin Avcı',
-      status: newReport.status || 'pending'
+    return () => {
+      supabase.removeChannel(channel);
     };
-    const updated = [reportWithAuthor, ...reports];
-    saveAndSetReports(updated);
+  }, []);
+
+  const fetchReportsFromSupabase = async () => {
+    const { data, error } = await supabase
+      .from('mushroom_reports')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Mantar raporları çekilemedi:', error);
+      return;
+    }
+
+    if (data) {
+      const now = Date.now();
+      const formatted: MushroomReport[] = data.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        locationName: item.location_name,
+        author: item.author,
+        trustScore: item.trust_score,
+        content: item.content,
+        upvotes: item.upvotes,
+        downvotes: item.downvotes,
+        status: item.status,
+        createdAt: Number(item.created_at),
+        coordinates: item.lat && item.lng ? { lat: item.lat, lng: item.lng } : null,
+        imageUrl: item.image_url,
+        mushroomData: {
+          species: item.species,
+          forestType: 'Ormanlık Alan',
+          soilCondition: 'Nemli / Yağmur Sonrası'
+        }
+      }));
+
+      const validReports = formatted.filter(rep => {
+        const createdAt = rep.createdAt || now;
+        return (now - createdAt) <= ONE_DAY_IN_MS;
+      });
+
+      setReports(validReports);
+    }
+  };
+
+  const handleVote = async (id: string, type: 'up' | 'down') => {
+    const target = reports.find(r => r.id === id);
+    if (!target) return;
+
+    const newUpvotes = type === 'up' ? target.upvotes + 1 : target.upvotes;
+    const newDownvotes = type === 'down' ? target.downvotes + 1 : target.downvotes;
+    const totalVotes = newUpvotes + newDownvotes;
+    const calculatedTrust = totalVotes > 0 ? Math.round((newUpvotes / totalVotes) * 100) : 50;
+    const newStatus = calculatedTrust >= 70 ? 'verified' : 'pending';
+
+    const { error } = await supabase
+      .from('mushroom_reports')
+      .update({
+        upvotes: newUpvotes,
+        downvotes: newDownvotes,
+        trust_score: calculatedTrust,
+        status: newStatus
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Oylama güncellenemedi:', error);
+      return;
+    }
+
+    fetchReportsFromSupabase();
+  };
+
+  const handleAddNewReport = async (newReport: MushroomReport) => {
+    const payload = {
+      id: newReport.id,
+      title: newReport.title,
+      location_name: newReport.locationName,
+      author: 'Gezgin Avcı',
+      trust_score: newReport.trustScore || 85,
+      content: newReport.content,
+      upvotes: newReport.upvotes || 0,
+      downvotes: newReport.downvotes || 0,
+      status: newReport.status || 'pending',
+      created_at: newReport.createdAt || Date.now(),
+      lat: newReport.coordinates?.lat || null,
+      lng: newReport.coordinates?.lng || null,
+      image_url: newReport.imageUrl || '',
+      species: newReport.mushroomData?.species || ''
+    };
+
+    const { error } = await supabase.from('mushroom_reports').insert([payload]);
+
+    if (error) {
+      console.error('Mantar raporu eklenemedi:', error);
+      alert('Rapor buluta kaydedilirken bir hata oluştu.');
+      return;
+    }
+
     setSelectedCoords(null);
+    fetchReportsFromSupabase();
   };
 
   const handleStartMapSelection = () => {
@@ -168,11 +186,11 @@ export default function MushroomModulePage() {
     }
   };
 
-  const getDisplayTime = (createdAt?: number, timeString?: string) => {
-    if (!createdAt) return timeString || 'Bilinmiyor';
+  const getDisplayTime = (createdAt?: number) => {
+    if (!createdAt) return 'Bilinmiyor';
     const diffMinutes = (Date.now() - createdAt) / (1000 * 60);
     if (diffMinutes <= 2) return 'Az önce';
-    return timeString || 'Bugün';
+    return 'Bugün';
   };
 
   const sortedReports = [...reports].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -214,7 +232,7 @@ export default function MushroomModulePage() {
               <h1 className="text-xs sm:text-sm font-black tracking-wide bg-gradient-to-r from-[#f4eee6] via-amber-200 to-amber-500 bg-clip-text text-transparent truncate max-w-[120px] sm:max-w-none">
                 MANTAR AVI DÜNYASI
               </h1>
-              <p className="text-[8px] sm:text-[9px] text-amber-600/90 font-medium tracking-wider uppercase hidden sm:block">Canlı Orman ve Mera Ağı</p>
+              <p className="text-[8px] sm:text-[9px] text-amber-600/90 font-medium tracking-wider uppercase hidden sm:block">Canlı Bulut Orman Ağı</p>
             </div>
           </div>
         </div>
@@ -286,7 +304,7 @@ export default function MushroomModulePage() {
           <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar">
             {latestReports.length === 0 ? (
               <div className="text-center py-12 px-4 space-y-2 bg-[#1c140d]/50 border border-[#32261e] rounded-2xl">
-                <p className="text-xs text-[#a8998e]">Henüz yeni mantar raporu bulunmuyor.</p>
+                <p className="text-xs text-[#a8998e]">Henüz bulutta mantar raporu bulunmuyor.</p>
               </div>
             ) : (
               latestReports.map((report) => (
@@ -300,7 +318,7 @@ export default function MushroomModulePage() {
                       <MapPin className="w-3 h-3 text-amber-500 shrink-0" /> {report.locationName}
                     </span>
                     <span className="text-[10px] text-[#a8998e] font-medium">
-                      {getDisplayTime(report.createdAt, report.timeString)}
+                      {getDisplayTime(report.createdAt)}
                     </span>
                   </div>
 
@@ -358,7 +376,7 @@ export default function MushroomModulePage() {
                       <MapPin className="w-3 h-3 text-amber-600 shrink-0" /> {report.locationName}
                     </span>
                     <span className="text-[10px] text-[#a8998e] font-medium">
-                      {getDisplayTime(report.createdAt, report.timeString)}
+                      {getDisplayTime(report.createdAt)}
                     </span>
                   </div>
 
@@ -425,7 +443,7 @@ export default function MushroomModulePage() {
 
               <div className="flex items-center justify-between pt-2 border-t border-[#32261e] text-xs text-[#a8998e]">
                 <span className="flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-amber-500" /> {getDisplayTime(activeDetailReport.createdAt, activeDetailReport.timeString)}
+                  <Clock className="w-3.5 h-3.5 text-amber-500" /> {getDisplayTime(activeDetailReport.createdAt)}
                 </span>
                 <span className="text-emerald-500 font-bold">Güvenilirlik: %{activeDetailReport.trustScore}</span>
               </div>
@@ -489,16 +507,16 @@ export default function MushroomModulePage() {
               <div className="flex items-start gap-3 bg-[#16110e] p-3 rounded-xl border border-[#32261e]">
                 <span className="w-5 h-5 rounded-full bg-amber-900/40 text-amber-400 font-bold flex items-center justify-center shrink-0 border border-amber-700/40">1</span>
                 <div>
-                  <strong className="text-white block mb-0.5">Canlı Orman Ağı</strong>
-                  GPS veya harita üzerinden konum seçerek mantar bulduğunuz meraları paylaşabilirsiniz.
+                  <strong className="text-white block mb-0.5">Ortak Bulut Orman Ağı</strong>
+                  Farklı cihazlardan bağlanan herkes aynı anda güncel mantar meralarını haritada görür.
                 </div>
               </div>
 
               <div className="flex items-start gap-3 bg-[#16110e] p-3 rounded-xl border border-[#32261e]">
                 <span className="w-5 h-5 rounded-full bg-amber-900/40 text-amber-400 font-bold flex items-center justify-center shrink-0 border border-amber-700/40">2</span>
                 <div>
-                  <strong className="text-white block mb-0.5">Otomatik Silinme</strong>
-                  Paylaşılan raporlar 24 saat sonra sistemden otomatik olarak temizlenir.
+                  <strong className="text-white block mb-0.5">24 Saat Otomatik Silinme</strong>
+                  Paylaşılan raporlar 24 saat sonra veritabanından otomatik olarak temizlenir.
                 </div>
               </div>
             </div>
