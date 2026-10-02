@@ -11,6 +11,26 @@ interface AddMushroomReportModalProps {
   selectedCoords?: { lat: number; lng: number } | null;
 }
 
+// Zamanı istenen formata çeviren yardımcı fonksiyon (Bugün: saat, Dün, İki gün önce)
+export const formatReportTime = (timestamp: number) => {
+  const now = Date.now();
+  const diffMs = now - timestamp;
+  const diffHours = diffMs / (1000 * 60 * 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  const dateObj = new Date(timestamp);
+  const timeString = dateObj.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+  if (diffHours < 24) {
+    return timeString; // Bugünse sadece saat
+  } else if (diffDays === 1) {
+    return 'Dün';
+  } else if (diffDays === 2) {
+    return 'İki gün önce';
+  }
+  return timeString;
+};
+
 export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, onStartMapSelection, selectedCoords }: AddMushroomReportModalProps) {
   const [title, setTitle] = useState('');
   const [locationName, setLocationName] = useState('');
@@ -67,8 +87,10 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, o
     e.preventDefault();
     if (!isFormValid) return;
 
+    const currentTime = Date.now();
+
     const newReport = {
-      id: Date.now().toString(),
+      id: currentTime.toString(),
       title: title.trim(),
       locationName: locationName.trim(),
       content: content.trim() || 'Ek açıklama girilmedi.',
@@ -77,7 +99,7 @@ export default function AddMushroomReportModal({ isOpen, onClose, onAddReport, o
       upvotes: 3,
       downvotes: 0,
       status: 'verified',
-      createdAt: Date.now(),
+      createdAt: currentTime, // Zaman damgası eklendi
       coordinates: finalActiveCoords, 
       imageUrl: imagePreview,
       mushroomData: {
