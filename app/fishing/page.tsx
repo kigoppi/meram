@@ -276,7 +276,7 @@ export default function FishingModulePage() {
           >
             <Plus className="w-3.5 h-3.5 transition-transform group-hover:rotate-90 duration-300" />
             <span className="hidden sm:inline">Rapor Ekle</span>
-            <span className="inline sm:hidden">Ekle</span>
+            <span className="inline sm:hidden">Rapor Ekle</span>
           </button>
         </div>
       </header>
