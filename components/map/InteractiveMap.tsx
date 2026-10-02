@@ -54,17 +54,16 @@ const getWeatherBadgeHTML = (tempStr: string, conditionText: string = '') => {
   `;
 };
 
-// İstediğin süre ve renk kuralları
 const getReportBadgeStyle = (createdAt?: number) => {
   const now = Date.now();
   const reportTime = createdAt || now;
   const diffMinutes = (now - reportTime) / (1000 * 60);
 
   if (diffMinutes <= 30) {
-    // 30 dakikaya kadar: Kırmızı + Alert sınıfı
-    return { borderColor: '#ef4444', className: 'alert-pulse-badge' };
+    // 30 dk altı: Kırmızı + Oval uyumlu yanıp sönen efekt
+    return { borderColor: '#ef4444', className: 'alert-pill-pulse' };
   } else if (diffMinutes <= 120) {
-    // 2 saate (120 dk) kadar: Turuncu (çerçeve yanmaz)
+    // 2 saate kadar: Turuncu, çerçeve sabit
     return { borderColor: '#f59e0b', className: '' };
   }
   // Sonrası: Mavi
