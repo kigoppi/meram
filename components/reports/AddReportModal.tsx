@@ -18,23 +18,34 @@ const FISH_SPECIES_LIST = [
   'Sinagrit', 'Minakop', 'Zargana', 'Gümüş', 'Uskumru', 'Kolyoz'
 ];
 
-// Zamanı istenen formata çeviren yardımcı fonksiyon
+// Takvim günü bazlı zaman formatlama fonksiyonu
 export const formatReportTime = (timestamp: number) => {
-  const now = Date.now();
-  const diffMs = now - timestamp;
-  const diffHours = diffMs / (1000 * 60 * 60);
-  const diffDays = Math.floor(diffHours / 24);
+  const now = new Date();
+  const reportDate = new Date(timestamp);
 
-  const dateObj = new Date(timestamp);
-  const timeString = dateObj.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  const timeString = reportDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
-  if (diffHours < 24) {
-    return timeString; // Bugünse sadece saat
-  } else if (diffDays === 1) {
+  // Aynı takvim günü mü kontrolü (Bugün)
+  const isToday = 
+    now.getDate() === reportDate.getDate() &&
+    now.getMonth() === reportDate.getMonth() &&
+    now.getFullYear() === reportDate.getFullYear();
+
+  if (isToday) {
+    return timeString; // Bugünse sadece saat (Örn: 21:45)
+  }
+
+  // Dün veya iki gün önce hesabı için gün farkı
+  const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const reportDateOnly = new Date(reportDate.getFullYear(), reportDate.getMonth(), reportDate.getDate());
+  const diffDays = Math.round((nowDateOnly.getTime() - reportDateOnly.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 1) {
     return 'Dün';
   } else if (diffDays === 2) {
     return 'İki gün önce';
   }
+
   return timeString;
 };
 
@@ -107,7 +118,7 @@ export default function AddReportModal({ isOpen, onClose, onAddReport, onStartMa
       upvotes: 4,
       downvotes: 0,
       status: 'verified',
-      createdAt: currentTime, // Zaman damgası eklendi
+      createdAt: currentTime, 
       coordinates: finalActiveCoords,
       imageUrl: imagePreview,
       subData: {
