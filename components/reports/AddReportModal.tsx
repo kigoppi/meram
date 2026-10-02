@@ -32,7 +32,7 @@ export const formatReportTime = (timestamp: number) => {
     now.getFullYear() === reportDate.getFullYear();
 
   if (isToday) {
-    return timeString; // Bugünse sadece saat (Örn: 21:45)
+    return timeString; // Bugünse sadece saat (Örn: 22:05)
   }
 
   // Dün veya iki gün önce hesabı için gün farkı
@@ -119,6 +119,7 @@ export default function AddReportModal({ isOpen, onClose, onAddReport, onStartMa
       downvotes: 0,
       status: 'verified',
       createdAt: currentTime, 
+      timeString: formatReportTime(currentTime), // <-- Zaman dizesi doğrudan eklendi
       coordinates: finalActiveCoords,
       imageUrl: imagePreview,
       subData: {

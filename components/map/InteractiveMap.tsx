@@ -60,13 +60,10 @@ const getReportBadgeStyle = (createdAt?: number) => {
   const diffMinutes = (now - reportTime) / (1000 * 60);
 
   if (diffMinutes <= 30) {
-    // 30 dk altı: Kırmızı + Oval uyumlu yanıp sönen efekt
     return { borderColor: '#ef4444', className: 'alert-pill-pulse' };
   } else if (diffMinutes <= 120) {
-    // 2 saate kadar: Turuncu, çerçeve sabit
     return { borderColor: '#f59e0b', className: '' };
   }
-  // Sonrası: Mavi
   return { borderColor: '#38bdf8', className: '' };
 };
 
@@ -98,6 +95,32 @@ const createCompactReportBadge = (trustScore: number, createdAt?: number) => {
     iconSize: [60, 26],
     iconAnchor: [30, 13]
   });
+};
+
+// Takvim günü bazlı zaman formatlama (Popup için)
+const formatMapPopupTime = (createdAt?: number) => {
+  if (!createdAt) return 'Bilinmiyor';
+  const now = new Date();
+  const reportDate = new Date(createdAt);
+  const timeString = reportDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+  const isToday = 
+    now.getDate() === reportDate.getDate() &&
+    now.getMonth() === reportDate.getMonth() &&
+    now.getFullYear() === reportDate.getFullYear();
+
+  if (isToday) {
+    return timeString; // Bugünse sadece saat
+  }
+
+  const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const reportDateOnly = new Date(reportDate.getFullYear(), reportDate.getMonth(), reportDate.getDate());
+  const diffDays = Math.round((nowDateOnly.getTime() - reportDateOnly.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 1) return 'Dün';
+  if (diffDays === 2) return 'İki gün önce';
+
+  return timeString;
 };
 
 interface Report {
@@ -266,13 +289,6 @@ export default function InteractiveMap({ reports = [], showWeatherLayer = false,
     );
   }
 
-  const getPopupDisplayTime = (createdAt?: number, timeString?: string) => {
-    if (!createdAt) return timeString || 'Bilinmiyor';
-    const diffMinutes = (Date.now() - createdAt) / (1000 * 60);
-    if (diffMinutes <= 2) return 'Az önce';
-    return timeString || 'Bugün';
-  };
-
   return (
     <div className="w-full h-full relative z-0">
       
@@ -349,7 +365,7 @@ export default function InteractiveMap({ reports = [], showWeatherLayer = false,
         {reports.map((report) => {
           if (!report.coordinates) return null;
           const compactIcon = createCompactReportBadge(report.trustScore, report.createdAt);
-          const displayTime = getPopupDisplayTime(report.createdAt, report.timeString);
+          const displayTime = formatMapPopupTime(report.createdAt); // <-- Güncellenen fonksiyon bağlandı
 
           return (
             <Marker key={report.id} position={[report.coordinates.lat, report.coordinates.lng]} icon={compactIcon}>
