@@ -48,3 +48,18 @@ body {
 }
 
 
+@keyframes alertPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8), 0 4px 10px rgba(0,0,0,0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0), 0 4px 10px rgba(0,0,0,0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0), 0 4px 10px rgba(0,0,0,0.5);
+  }
+}
+
+.alert-pulse-badge {
+  animation: alertPulse 1.5s infinite;
+}

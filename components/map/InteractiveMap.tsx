@@ -4,34 +4,33 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { Loader2, Sun, CloudRain, Cloud, CloudLightning, Snowflake, Wind } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 const TURKEY_BOUNDS = L.latLngBounds(
   [35.0, 25.0],
   [43.0, 46.0]
 );
 
-// Hava durumuna göre akıllı ikon döndüren yardımcı fonksiyon
 const getWeatherBadgeHTML = (tempStr: string, conditionText: string = '') => {
   const text = conditionText.toLowerCase();
   let emoji = '☀️';
-  let color = '#facc15'; // Sarı
+  let color = '#facc15';
 
   if (text.includes('yağmur') || text.includes('sağanak') || text.includes('çisenti')) {
     emoji = '🌧️';
-    color = '#60a5fa'; // Mavi
+    color = '#60a5fa';
   } else if (text.includes('bulut') || text.includes('kapalı')) {
     emoji = '☁️';
-    color = '#94a3b8'; // Gri
+    color = '#94a3b8';
   } else if (text.includes('fırtına') || text.includes('şimşek')) {
     emoji = '⚡';
-    color = '#fbbf24'; // Turuncu/Sarı
+    color = '#fbbf24';
   } else if (text.includes('kar')) {
     emoji = '❄️';
-    color = '#93c5fd'; // Açık Mavi
+    color = '#93c5fd';
   } else if (text.includes('rüzgar')) {
     emoji = '🌬️';
-    color = '#2dd4bf'; // Teal
+    color = '#2dd4bf';
   }
 
   return `
@@ -55,22 +54,28 @@ const getWeatherBadgeHTML = (tempStr: string, conditionText: string = '') => {
   `;
 };
 
+// İstediğin süre ve renk kuralları
 const getReportBadgeStyle = (createdAt?: number) => {
   const now = Date.now();
   const reportTime = createdAt || now;
   const diffMinutes = (now - reportTime) / (1000 * 60);
 
-  if (diffMinutes <= 1) return { borderColor: '#ef4444' };
-  if (diffMinutes <= 30) return { borderColor: '#f59e0b' };
-  if (diffMinutes <= 60) return { borderColor: '#10b981' };
-  return { borderColor: '#38bdf8' };
+  if (diffMinutes <= 30) {
+    // 30 dakikaya kadar: Kırmızı + Alert sınıfı
+    return { borderColor: '#ef4444', className: 'alert-pulse-badge' };
+  } else if (diffMinutes <= 120) {
+    // 2 saate (120 dk) kadar: Turuncu (çerçeve yanmaz)
+    return { borderColor: '#f59e0b', className: '' };
+  }
+  // Sonrası: Mavi
+  return { borderColor: '#38bdf8', className: '' };
 };
 
 const createCompactReportBadge = (trustScore: number, createdAt?: number) => {
   const style = getReportBadgeStyle(createdAt);
 
   return L.divIcon({
-    className: 'compact-report-badge',
+    className: `compact-report-badge ${style.className}`,
     html: `
       <div style="
         background: #0f172a; 
@@ -223,7 +228,6 @@ export default function InteractiveMap({ reports = [], showWeatherLayer = false,
               const w = data?.current?.wind_speed_10m;
               const wCode = data?.current?.weather_code;
 
-              // WMO weather code çevirisi
               let condStr = 'Açık / Güneşli';
               if (wCode !== undefined) {
                 if ([1, 2, 3].includes(wCode)) condStr = 'Parçalı Bulutlu';
@@ -335,7 +339,7 @@ export default function InteractiveMap({ reports = [], showWeatherLayer = false,
                     <div className="flex justify-between items-center"><span className="text-slate-600">Durum:</span><span className="font-bold text-cyan-700">{liveData.conditionText}</span></div>
                     <div className="flex justify-between items-center"><span className="text-slate-600">Sıcaklık:</span><span className="font-bold">{liveData.temp}</span></div>
                     {pt.hasSea && <div className="flex justify-between items-center"><span className="text-slate-600">Deniz:</span><span className="font-bold text-blue-600">{liveData.seaTemp}</span></div>}
-                    <div className="flex justify-between items-center pt-0.5 border-t"><span className="text-slate-600">Rüzgar:</span><span className="font-semibold">{liveData.wind}</span></div>
+                    <div className="flex justify-between items-center pt-0.5 border-t"><span className="text-slate-600">Rüzgar:</span><span className="semibold">{liveData.wind}</span></div>
                   </div>
                 </div>
               </Popup>
