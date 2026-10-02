@@ -10,22 +10,29 @@ const TURKEY_BOUNDS = L.latLngBounds(
   [43.0, 46.0]
 );
 
+// İstediğin süre kurallarına göre rozet rengi ve animasyon belirleme
 const getReportBadgeStyle = (createdAt?: number) => {
   const now = Date.now();
   const reportTime = createdAt || now;
-  const diffMinutes = (now - reportTime) / (1000 * 60);
+  const diffHours = (now - reportTime) / (1000 * 60 * 60);
+  const diffDays = diffHours / 24;
 
-  if (diffMinutes <= 1) return { borderColor: '#d97706' };
-  if (diffMinutes <= 30) return { borderColor: '#f59e0b' };
-  if (diffMinutes <= 60) return { borderColor: '#10b981' };
-  return { borderColor: '#d4c5b9' };
+  if (diffDays <= 1) {
+    // Son 1 gün (24 saat): Kırmızı + Yanıp sönen alarm efekti
+    return { borderColor: '#ef4444', className: 'alert-pill-pulse' };
+  } else if (diffDays <= 3) {
+    // Son 3 gün (1 ila 3 gün arası): Turuncu (sabit, yanmaz)
+    return { borderColor: '#f59e0b', className: '' };
+  }
+  // 3 günden sonra: Mavi (sabit)
+  return { borderColor: '#38bdf8', className: '' };
 };
 
 const createMushroomReportBadge = (trustScore: number, createdAt?: number) => {
   const style = getReportBadgeStyle(createdAt);
 
   return L.divIcon({
-    className: 'mushroom-report-badge',
+    className: `mushroom-report-badge ${style.className}`,
     html: `
       <div style="
         background: #1c140d; 
@@ -97,11 +104,31 @@ export default function MushroomMap({ reports = [], onMapClick }: MushroomMapPro
     );
   }
 
-  const getPopupDisplayTime = (createdAt?: number, timeString?: string) => {
-    if (!createdAt) return timeString || 'Bilinmiyor';
-    const diffMinutes = (Date.now() - createdAt) / (1000 * 60);
-    if (diffMinutes <= 2) return 'Az önce';
-    return timeString || 'Bugün';
+  // Takvim günü bazlı popup zaman gösterimi
+  const getPopupDisplayTime = (createdAt?: number) => {
+    if (!createdAt) return 'Bilinmiyor';
+    
+    const now = new Date();
+    const reportDate = new Date(createdAt);
+    const timeString = reportDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+    const isToday = 
+      now.getDate() === reportDate.getDate() &&
+      now.getMonth() === reportDate.getMonth() &&
+      now.getFullYear() === reportDate.getFullYear();
+
+    if (isToday) {
+      return timeString; // Bugünse sadece saat yazar
+    }
+
+    const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const reportDateOnly = new Date(reportDate.getFullYear(), reportDate.getMonth(), reportDate.getDate());
+    const diffDays = Math.round((nowDateOnly.getTime() - reportDateOnly.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) return 'Dün';
+    if (diffDays === 2) return 'İki gün önce';
+
+    return timeString;
   };
 
   return (
@@ -127,7 +154,7 @@ export default function MushroomMap({ reports = [], onMapClick }: MushroomMapPro
         {reports.map((report) => {
           if (!report.coordinates) return null;
           const mushroomIcon = createMushroomReportBadge(report.trustScore, report.createdAt);
-          const displayTime = getPopupDisplayTime(report.createdAt, report.timeString);
+          const displayTime = getPopupDisplayTime(report.createdAt);
 
           return (
             <Marker key={report.id} position={[report.coordinates.lat, report.coordinates.lng]} icon={mushroomIcon}>
