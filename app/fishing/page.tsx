@@ -236,35 +236,35 @@ export default function FishingModulePage() {
         </div>
       )}
 
-      <header className="h-14 sm:h-16 border-b border-cyan-900/30 bg-[#030712]/95 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl">
-        <div className="flex items-center gap-2 sm:gap-4">
+      <header className="h-14 sm:h-16 border-b border-cyan-900/30 bg-[#030712]/95 backdrop-blur-xl px-2 sm:px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl gap-1">
+        <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
           <button 
             onClick={() => router.push('/')}
-            className="group px-2.5 py-1.5 rounded-xl bg-slate-900/80 hover:bg-cyan-950/50 border border-slate-800 hover:border-cyan-500/40 text-slate-300 hover:text-cyan-400 transition-all flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold cursor-pointer shadow-md"
+            className="group px-2 py-1.5 rounded-xl bg-slate-900/80 hover:bg-cyan-950/50 border border-slate-800 hover:border-cyan-500/40 text-slate-300 hover:text-cyan-400 transition-all flex items-center gap-1 text-[11px] sm:text-xs font-semibold cursor-pointer shadow-md shrink-0"
           >
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Anasayfa</span>
+            <span className="hidden xs:inline">Anasayfa</span>
           </button>
           
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-400 p-0.5 shadow-md flex items-center justify-center">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-400 p-0.5 shadow-md flex items-center justify-center shrink-0">
               <div className="w-full h-full bg-[#030712] rounded-[10px] flex items-center justify-center">
                 <Fish className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" />
               </div>
             </div>
-            <div>
-              <h1 className="text-xs sm:text-sm font-black tracking-wide bg-gradient-to-r from-white via-cyan-200 to-cyan-400 bg-clip-text text-transparent truncate max-w-[110px] sm:max-w-none">
-                BALIKÇILIK DÜNYASI
+            <div className="min-w-0">
+              <h1 className="text-[11px] sm:text-sm font-black tracking-wide bg-gradient-to-r from-white via-cyan-200 to-cyan-400 bg-clip-text text-transparent truncate">
+                BALIKÇILIK
               </h1>
               <p className="text-[8px] sm:text-[9px] text-cyan-500/80 font-medium tracking-wider uppercase hidden sm:block">Bildirim Platformu</p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           <button 
             onClick={() => setIsInfoModalOpen(true)}
-            className="p-1.5 sm:p-2 rounded-xl bg-slate-900/80 hover:bg-cyan-950/50 border border-slate-800 text-cyan-400 transition-colors cursor-pointer shadow-md"
+            className="p-2 rounded-xl bg-slate-900/80 hover:bg-cyan-950/50 border border-slate-800 text-cyan-400 transition-colors cursor-pointer shadow-md"
             title="Nasıl Kullanılır?"
           >
             <Info className="w-3.5 h-3.5" />
@@ -272,10 +272,11 @@ export default function FishingModulePage() {
 
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="group relative px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 text-white font-bold text-[11px] sm:text-xs uppercase tracking-wider flex items-center gap-1 shadow-lg shadow-cyan-600/35 transition-all cursor-pointer border border-cyan-400/30 active:scale-95"
+            className="group relative px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 text-white font-bold text-[11px] sm:text-xs uppercase tracking-wider flex items-center gap-1 shadow-lg shadow-cyan-600/35 transition-all cursor-pointer border border-cyan-400/30 active:scale-95 shrink-0"
           >
             <Plus className="w-3.5 h-3.5 transition-transform group-hover:rotate-90 duration-300" />
-            <span>Rapor Ekle</span>
+            <span className="hidden sm:inline">Rapor Ekle</span>
+            <span className="inline sm:hidden">Ekle</span>
           </button>
         </div>
       </header>
