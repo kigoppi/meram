@@ -58,11 +58,13 @@ export default function FishingModulePage() {
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
 
-  // Supabase'den Verileri Çekme ve Realtime Dinleme
+  // Yorumlar için state'ler
+  const [comments, setComments] = useState<any[]>([]);
+  const [newCommentText, setNewCommentText] = useState('');
+
   useEffect(() => {
     fetchReportsFromSupabase();
 
-    // Canlı (Realtime) Senkronizasyon Aboneliği
     const channel = supabase
       .channel('public:fishing_reports')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'fishing_reports' }, () => {
@@ -74,6 +76,48 @@ export default function FishingModulePage() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // Rapor detay modalı açıldığında yorumları çek
+  useEffect(() => {
+    if (activeDetailReport) {
+      fetchComments(activeDetailReport.id, 'fishing_report_comments');
+    } else {
+      setComments([]);
+    }
+  }, [activeDetailReport]);
+
+  const fetchComments = async (reportId: string, tableName: string) => {
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .eq('report_id', reportId)
+      .order('created_at', { ascending: true });
+
+    if (!error && data) {
+      setComments(data);
+    }
+  };
+
+  const handleAddComment = async (tableName: string) => {
+    if (!newCommentText.trim() || !activeDetailReport) return;
+
+    const payload = {
+      report_id: activeDetailReport.id,
+      author: 'Gezgin Avcı',
+      content: newCommentText.trim(),
+      created_at: Date.now()
+    };
+
+    const { error } = await supabase.from(tableName).insert([payload]);
+
+    if (error) {
+      console.error('Yorum eklenemedi:', error);
+      return;
+    }
+
+    setNewCommentText('');
+    fetchComments(activeDetailReport.id, tableName);
+  };
 
   const fetchReportsFromSupabase = async () => {
     const { data, error } = await supabase
@@ -107,7 +151,6 @@ export default function FishingModulePage() {
         }
       }));
 
-      // 24 saat kuralı filtrelemesi
       const validReports = formatted.filter(rep => {
         const createdAt = rep.createdAt || now;
         return (now - createdAt) <= ONE_DAY_IN_MS;
@@ -190,7 +233,6 @@ export default function FishingModulePage() {
     }
   };
 
-  // Takvim günü bazlı doğru zaman gösterim fonksiyonu
   const getDisplayTime = (createdAt?: number) => {
     if (!createdAt) return 'Bilinmiyor';
     
@@ -204,7 +246,7 @@ export default function FishingModulePage() {
       now.getFullYear() === reportDate.getFullYear();
 
     if (isToday) {
-      return timeString; // Bugünse sadece saat yazar (Örn: 22:15)
+      return timeString; 
     }
 
     const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -236,6 +278,7 @@ export default function FishingModulePage() {
         </div>
       )}
 
+      {/* Mobil Sıkışma Önleyici Optimize Edilmiş Header */}
       <header className="h-14 sm:h-16 border-b border-cyan-900/30 bg-[#030712]/95 backdrop-blur-xl px-2 sm:px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl gap-1">
         <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
           <button 
@@ -276,7 +319,7 @@ export default function FishingModulePage() {
           >
             <Plus className="w-3.5 h-3.5 transition-transform group-hover:rotate-90 duration-300" />
             <span className="hidden sm:inline">Rapor Ekle</span>
-            <span className="inline sm:hidden">Rapor Ekle</span>
+            <span className="inline sm:hidden">Ekle</span>
           </button>
         </div>
       </header>
@@ -483,6 +526,46 @@ export default function FishingModulePage() {
                 </span>
                 <span className="text-emerald-400 font-bold">Güvenilirlik: %{activeDetailReport.trustScore}</span>
               </div>
+
+              {/* Yorumlar Bölümü */}
+              <div className="border-t border-slate-800 pt-3 space-y-3">
+                <h3 className="text-xs font-bold text-cyan-400 uppercase tracking-wider">Mera Yorumları ({comments.length})</h3>
+                
+                <div className="max-h-36 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                  {comments.length === 0 ? (
+                    <p className="text-[11px] text-slate-500 italic">Henüz yorum yapılmamış. İlk yorumu sen yaz!</p>
+                  ) : (
+                    comments.map((c) => (
+                      <div key={c.id} className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80 space-y-1">
+                        <div className="flex items-center justify-between text-[10px] text-slate-400">
+                          <span className="font-bold text-cyan-300">{c.author}</span>
+                          <span>{new Date(c.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <p className="text-xs text-slate-200">{c.content}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="Mera hakkında bir yorum yaz..."
+                    value={newCommentText}
+                    onChange={(e) => setNewCommentText(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment('fishing_report_comments'); }}
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => handleAddComment('fishing_report_comments')}
+                    className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs transition-colors cursor-pointer shrink-0 shadow-md"
+                  >
+                    Gönder
+                  </button>
+                </div>
+              </div>
+
             </div>
 
             <div className="pt-3 border-t border-slate-800 flex items-center justify-between">

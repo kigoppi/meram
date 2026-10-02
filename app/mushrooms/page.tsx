@@ -57,6 +57,10 @@ export default function MushroomModulePage() {
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
 
+  // Yorumlar için state'ler
+  const [comments, setComments] = useState<any[]>([]);
+  const [newCommentText, setNewCommentText] = useState('');
+
   useEffect(() => {
     fetchReportsFromSupabase();
 
@@ -71,6 +75,47 @@ export default function MushroomModulePage() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  useEffect(() => {
+    if (activeDetailReport) {
+      fetchComments(activeDetailReport.id, 'mushroom_report_comments');
+    } else {
+      setComments([]);
+    }
+  }, [activeDetailReport]);
+
+  const fetchComments = async (reportId: string, tableName: string) => {
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .eq('report_id', reportId)
+      .order('created_at', { ascending: true });
+
+    if (!error && data) {
+      setComments(data);
+    }
+  };
+
+  const handleAddComment = async (tableName: string) => {
+    if (!newCommentText.trim() || !activeDetailReport) return;
+
+    const payload = {
+      report_id: activeDetailReport.id,
+      author: 'Gezgin Avcı',
+      content: newCommentText.trim(),
+      created_at: Date.now()
+    };
+
+    const { error } = await supabase.from(tableName).insert([payload]);
+
+    if (error) {
+      console.error('Yorum eklenemedi:', error);
+      return;
+    }
+
+    setNewCommentText('');
+    fetchComments(activeDetailReport.id, tableName);
+  };
 
   const fetchReportsFromSupabase = async () => {
     const { data, error } = await supabase
@@ -186,7 +231,6 @@ export default function MushroomModulePage() {
     }
   };
 
-  // Takvim günü bazlı doğru zaman gösterim fonksiyonu
   const getDisplayTime = (createdAt?: number) => {
     if (!createdAt) return 'Bilinmiyor';
     
@@ -200,7 +244,7 @@ export default function MushroomModulePage() {
       now.getFullYear() === reportDate.getFullYear();
 
     if (isToday) {
-      return timeString; // Bugünse sadece saat yazar (Örn: 22:10)
+      return timeString; 
     }
 
     const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -232,6 +276,7 @@ export default function MushroomModulePage() {
         </div>
       )}
 
+      {/* Mobil Sıkışma Önleyici Optimize Edilmiş Header */}
       <header className="h-14 sm:h-16 border-b border-[#32261e] bg-[#1c140d]/95 backdrop-blur-xl px-2 sm:px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl gap-1">
         <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
           <button 
@@ -272,7 +317,7 @@ export default function MushroomModulePage() {
           >
             <Plus className="w-3.5 h-3.5 transition-transform group-hover:rotate-90 duration-300" />
             <span className="hidden sm:inline">Rapor Ekle</span>
-            <span className="inline sm:hidden">Rapor Ekle</span>
+            <span className="inline sm:hidden">Ekle</span>
           </button>
         </div>
       </header>
@@ -468,6 +513,46 @@ export default function MushroomModulePage() {
                 </span>
                 <span className="text-emerald-500 font-bold">Güvenilirlik: %{activeDetailReport.trustScore}</span>
               </div>
+
+              {/* Yorumlar Bölümü */}
+              <div className="border-t border-[#32261e] pt-3 space-y-3">
+                <h3 className="text-xs font-bold text-amber-500 uppercase tracking-wider">Orman Yorumları ({comments.length})</h3>
+                
+                <div className="max-h-36 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                  {comments.length === 0 ? (
+                    <p className="text-[11px] text-[#a8998e] italic">Henüz yorum yapılmamış. İlk yorumu sen yaz!</p>
+                  ) : (
+                    comments.map((c) => (
+                      <div key={c.id} className="bg-[#16110e] p-2.5 rounded-xl border border-[#32261e] space-y-1">
+                        <div className="flex items-center justify-between text-[10px] text-[#a8998e]">
+                          <span className="font-bold text-amber-400">{c.author}</span>
+                          <span>{new Date(c.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <p className="text-xs text-[#f4eee6]">{c.content}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="Mera / orman hakkında yorum yaz..."
+                    value={newCommentText}
+                    onChange={(e) => setNewCommentText(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment('mushroom_report_comments'); }}
+                    className="flex-1 bg-[#16110e] border border-[#32261e] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-600"
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => handleAddComment('mushroom_report_comments')}
+                    className="px-4 py-2 rounded-xl bg-amber-700 hover:bg-amber-600 text-white font-bold text-xs transition-colors cursor-pointer shrink-0 shadow-md"
+                  >
+                    Gönder
+                  </button>
+                </div>
+              </div>
+
             </div>
 
             <div className="pt-3 border-t border-[#32261e] flex items-center justify-between">
