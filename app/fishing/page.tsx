@@ -190,11 +190,31 @@ export default function FishingModulePage() {
     }
   };
 
+  // Takvim günü bazlı doğru zaman gösterim fonksiyonu
   const getDisplayTime = (createdAt?: number) => {
     if (!createdAt) return 'Bilinmiyor';
-    const diffMinutes = (Date.now() - createdAt) / (1000 * 60);
-    if (diffMinutes <= 2) return 'Az önce';
-    return 'Bugün';
+    
+    const now = new Date();
+    const reportDate = new Date(createdAt);
+    const timeString = reportDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+    const isToday = 
+      now.getDate() === reportDate.getDate() &&
+      now.getMonth() === reportDate.getMonth() &&
+      now.getFullYear() === reportDate.getFullYear();
+
+    if (isToday) {
+      return timeString; // Bugünse sadece saat yazar (Örn: 22:15)
+    }
+
+    const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const reportDateOnly = new Date(reportDate.getFullYear(), reportDate.getMonth(), reportDate.getDate());
+    const diffDays = Math.round((nowDateOnly.getTime() - reportDateOnly.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) return 'Dün';
+    if (diffDays === 2) return 'İki gün önce';
+
+    return timeString;
   };
 
   const sortedReports = [...reports].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
