@@ -12,7 +12,6 @@ export default function HomePage() {
       
       {/* Üst Başlık ve Resim */}
       <div className="text-center space-y-3 mb-8 sm:mb-12 max-w-xl">
-        <div className="w-32 h-32 sm:w-36 sm:h-36 mx-auto rounded-3xl overflow-hidden shadow-2xl shadow-cyan-950/50 border border-cyan-500/30 bg-slate-900/80 p-1 mb-2">
           <img 
             src="/fishmush.png" 
             alt="Fishmush Logo" 
