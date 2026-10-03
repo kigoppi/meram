@@ -11,7 +11,7 @@ export default function HomePage() {
     <div className="min-h-screen w-screen bg-[#030712] text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 selection:bg-cyan-500 selection:text-black">
       
       {/* Üst Başlık ve Düzenlenmiş Logo */}
-      <div className="text-center space-y+4 mb-8 sm:mb-12 max-w-xl">
+      <div className="text-center space-y+8 mb-8 sm:mb-12 max-w-xl">
         <div className="w-36 h-36 sm:w-40 sm:h-40 mx-auto flex items-center justify-center">
           <img 
             src="/fishmush.png" 
