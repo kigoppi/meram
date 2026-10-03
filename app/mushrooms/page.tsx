@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { 
   Trees, MapPin, ThumbsUp, ThumbsDown, Plus, 
-  Compass, ArrowLeft, X, Clock, Sparkles, Waves, Info, User, LogOut
+  Compass, ArrowLeft, X, Clock, Sparkles, Waves, Info, User, LogOut, MessageSquare
 } from 'lucide-react';
 import AddMushroomReportModal from '@/components/reports/AddMushroomReportModal';
 import { supabase } from '@/lib/supabase';
@@ -36,6 +36,7 @@ interface MushroomReport {
   createdAt?: number;
   coordinates?: { lat: number; lng: number } | null;
   imageUrl?: string;
+  commentsCount?: number; // Yorum sayısı eklendi
   mushroomData: {
     species: string;
     forestType: string;
@@ -57,12 +58,10 @@ export default function MushroomModulePage() {
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
 
-  // Kullanıcı Girişi State'leri
   const [currentUser, setCurrentUser] = useState<string>('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [tempUsername, setTempUsername] = useState('');
 
-  // Yorumlar State'leri
   const [comments, setComments] = useState<any[]>([]);
   const [newCommentText, setNewCommentText] = useState('');
 
@@ -81,10 +80,21 @@ export default function MushroomModulePage() {
       })
       .subscribe();
 
+    const commentsChannel = supabase
+      .channel('public:mushroom_report_comments')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'mushroom_report_comments' }, () => {
+        fetchReportsFromSupabase();
+        if (activeDetailReport) {
+          fetchComments(activeDetailReport.id, 'mushroom_report_comments');
+        }
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(commentsChannel);
     };
-  }, []);
+  }, [activeDetailReport]);
 
   useEffect(() => {
     if (activeDetailReport) {
@@ -155,22 +165,34 @@ export default function MushroomModulePage() {
 
     setNewCommentText('');
     fetchComments(activeDetailReport.id, tableName);
+    fetchReportsFromSupabase();
   };
 
   const fetchReportsFromSupabase = async () => {
-    const { data, error } = await supabase
+    const { data: reportsData, error: reportsError } = await supabase
       .from('mushroom_reports')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Mantar raporları çekilemedi:', error);
+    if (reportsError) {
+      console.error('Mantar raporları çekilemedi:', reportsError);
       return;
     }
 
-    if (data) {
+    const { data: commentsData } = await supabase
+      .from('mushroom_report_comments')
+      .select('report_id');
+
+    const commentCountsMap: Record<string, number> = {};
+    if (commentsData) {
+      commentsData.forEach((c: any) => {
+        commentCountsMap[c.report_id] = (commentCountsMap[c.report_id] || 0) + 1;
+      });
+    }
+
+    if (reportsData) {
       const now = Date.now();
-      const formatted: MushroomReport[] = data.map((item: any) => ({
+      const formatted: MushroomReport[] = reportsData.map((item: any) => ({
         id: item.id,
         title: item.title,
         locationName: item.location_name,
@@ -183,6 +205,7 @@ export default function MushroomModulePage() {
         createdAt: Number(item.created_at),
         coordinates: item.lat && item.lng ? { lat: item.lat, lng: item.lng } : null,
         imageUrl: item.image_url,
+        commentsCount: commentCountsMap[item.id] || 0,
         mushroomData: {
           species: item.species,
           forestType: 'Ormanlık Alan',
@@ -316,7 +339,6 @@ export default function MushroomModulePage() {
         </div>
       )}
 
-      {/* Sıkışma Önleyici Optimize Header & Profil Göstergesi */}
       <header className="h-14 sm:h-16 border-b border-[#32261e] bg-[#1c140d]/95 backdrop-blur-xl px-2 sm:px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl gap-1">
         <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
           <button 
@@ -379,7 +401,6 @@ export default function MushroomModulePage() {
         </div>
       </header>
 
-      {/* Kullanıcı Giriş Modalı */}
       {isAuthModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
           <div className="bg-[#1c140d] border border-amber-700/50 w-full max-w-sm rounded-2xl p-6 relative shadow-2xl text-[#f4eee6] space-y-4">
@@ -493,14 +514,20 @@ export default function MushroomModulePage() {
                     {report.title}
                   </h3>
 
-                  {report.mushroomData?.species && (
-                    <div className="flex items-center justify-between pt-1 text-[11px]">
+                  <div className="flex items-center justify-between pt-1 text-[11px]">
+                    {report.mushroomData?.species ? (
                       <span className="px-2 py-0.5 rounded bg-[#2c221a] text-amber-300 border border-[#44352a] font-semibold truncate">
                         🍄 {report.mushroomData.species}
                       </span>
+                    ) : <span />}
+
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1 text-[10px] text-[#a8998e] bg-[#1c140d] px-1.5 py-0.5 rounded border border-[#32261e]">
+                        <MessageSquare className="w-3 h-3 text-amber-500" /> {report.commentsCount || 0}
+                      </span>
                       <span className="text-emerald-500 font-bold">%{report.trustScore}</span>
                     </div>
-                  )}
+                  </div>
                 </div>
               ))
             )}
@@ -551,14 +578,20 @@ export default function MushroomModulePage() {
                     {report.title}
                   </h3>
 
-                  {report.mushroomData?.species && (
-                    <div className="flex items-center justify-between pt-1 text-[11px]">
+                  <div className="flex items-center justify-between pt-1 text-[11px]">
+                    {report.mushroomData?.species ? (
                       <span className="px-2 py-0.5 rounded bg-[#1c140d] text-[#a8998e] border border-[#32261e] font-semibold truncate">
                         🍄 {report.mushroomData.species}
                       </span>
+                    ) : <span />}
+
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1 text-[10px] text-[#a8998e] bg-[#1c140d] px-1.5 py-0.5 rounded border border-[#32261e]">
+                        <MessageSquare className="w-3 h-3 text-amber-500" /> {report.commentsCount || 0}
+                      </span>
                       <span className="text-emerald-500 font-bold">%{report.trustScore}</span>
                     </div>
-                  )}
+                  </div>
                 </div>
               ))
             )}
