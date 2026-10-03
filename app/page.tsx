@@ -10,12 +10,13 @@ export default function HomePage() {
   return (
     <div className="min-h-screen w-screen bg-[#030712] text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 selection:bg-cyan-500 selection:text-black">
       
-      {/* Üst Başlık ve Resim */}
+      {/* Üst Başlık ve Çerçevesiz Logo */}
       <div className="text-center space-y-3 mb-8 sm:mb-12 max-w-xl">
+        <div className="w-32 h-32 sm:w-36 sm:h-36 mx-auto flex items-center justify-center mb-2">
           <img 
             src="/fishmush.png" 
             alt="Fishmush Logo" 
-            className="w-full h-full object-cover scale-125 transform rounded-2xl"
+            className="w-full h-full object-contain filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]"
           />
         </div>
         <h1 className="text-2xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-white via-slate-200 to-cyan-400 bg-clip-text text-transparent">
