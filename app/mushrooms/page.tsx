@@ -8,6 +8,7 @@ import {
   Compass, ArrowLeft, X, Clock, Sparkles, Waves, Info, User, LogOut, MessageSquare
 } from 'lucide-react';
 import AddMushroomReportModal from '@/components/reports/AddMushroomReportModal';
+import AuthModal from '@/components/auth/AuthModal';
 import { supabase } from '@/lib/supabase';
 
 const MushroomMap = dynamic(
@@ -36,7 +37,7 @@ interface MushroomReport {
   createdAt?: number;
   coordinates?: { lat: number; lng: number } | null;
   imageUrl?: string;
-  commentsCount?: number; // Yorum sayısı eklendi
+  commentsCount?: number;
   mushroomData: {
     species: string;
     forestType: string;
@@ -58,10 +59,11 @@ export default function MushroomModulePage() {
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
 
+  // Kullanıcı Girişi State'leri
   const [currentUser, setCurrentUser] = useState<string>('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [tempUsername, setTempUsername] = useState('');
 
+  // Yorumlar State'leri
   const [comments, setComments] = useState<any[]>([]);
   const [newCommentText, setNewCommentText] = useState('');
 
@@ -103,16 +105,6 @@ export default function MushroomModulePage() {
       setComments([]);
     }
   }, [activeDetailReport]);
-
-  const handleLoginSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!tempUsername.trim()) return;
-    const name = tempUsername.trim();
-    localStorage.setItem('app_username', name);
-    setCurrentUser(name);
-    setIsAuthModalOpen(false);
-    setTempUsername('');
-  };
 
   const handleLogout = () => {
     localStorage.removeItem('app_username');
@@ -339,6 +331,7 @@ export default function MushroomModulePage() {
         </div>
       )}
 
+      {/* Sıkışma Önleyici Header ve Profil */}
       <header className="h-14 sm:h-16 border-b border-[#32261e] bg-[#1c140d]/95 backdrop-blur-xl px-2 sm:px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl gap-1">
         <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
           <button 
@@ -401,48 +394,12 @@ export default function MushroomModulePage() {
         </div>
       </header>
 
-      {isAuthModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
-          <div className="bg-[#1c140d] border border-amber-700/50 w-full max-w-sm rounded-2xl p-6 relative shadow-2xl text-[#f4eee6] space-y-4">
-            <div className="text-center space-y-1">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-500 mb-2">
-                <User className="w-6 h-6" />
-              </div>
-              <h2 className="text-lg font-bold">Avcı Kimliği Gerekiyor</h2>
-              <p className="text-xs text-[#a8998e]">Rapor ve yorum paylaşabilmek için lütfen bir rumuz (isim) belirleyin.</p>
-            </div>
-
-            <form onSubmit={handleLoginSubmit} className="space-y-3">
-              <div>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="Örn: Ahmet Avcı"
-                  value={tempUsername}
-                  onChange={(e) => setTempUsername(e.target.value)}
-                  className="w-full bg-[#16110e] border border-[#32261e] rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-amber-600 font-medium text-center"
-                  maxLength={20}
-                />
-              </div>
-              <div className="flex gap-2 pt-1">
-                <button 
-                  type="button"
-                  onClick={() => setIsAuthModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-[#261d15] hover:bg-[#36291e] text-[#d4c5b9] text-xs font-semibold"
-                >
-                  İptal
-                </button>
-                <button 
-                  type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-700 to-emerald-800 text-white font-bold text-xs uppercase shadow-lg shadow-amber-950/50"
-                >
-                  Tamam
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Şifreli Giriş/Kayıt Modalı */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+        onLogin={(name) => setCurrentUser(name)} 
+      />
 
       <div className="flex lg:hidden bg-[#1c140d] border-b border-[#32261e] p-1.5 shrink-0 z-40 justify-around text-xs font-bold">
         <button

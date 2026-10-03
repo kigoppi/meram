@@ -8,6 +8,7 @@ import {
   Compass, ArrowLeft, X, Clock, Sparkles, Waves, Info, User, LogOut, MessageSquare
 } from 'lucide-react';
 import AddReportModal from '@/components/reports/AddReportModal';
+import AuthModal from '@/components/auth/AuthModal';
 import { supabase } from '@/lib/supabase';
 
 const InteractiveMap = dynamic(
@@ -36,7 +37,7 @@ interface Report {
   createdAt?: number;
   coordinates?: { lat: number; lng: number } | null;
   imageUrl?: string;
-  commentsCount?: number; // Yorum sayısı eklendi
+  commentsCount?: number;
   subData: {
     fishType?: string;
     lure?: string;
@@ -59,10 +60,11 @@ export default function FishingModulePage() {
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
 
+  // Kullanıcı Girişi State'leri
   const [currentUser, setCurrentUser] = useState<string>('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [tempUsername, setTempUsername] = useState('');
 
+  // Yorumlar State'leri
   const [comments, setComments] = useState<any[]>([]);
   const [newCommentText, setNewCommentText] = useState('');
 
@@ -104,16 +106,6 @@ export default function FishingModulePage() {
       setComments([]);
     }
   }, [activeDetailReport]);
-
-  const handleLoginSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!tempUsername.trim()) return;
-    const name = tempUsername.trim();
-    localStorage.setItem('app_username', name);
-    setCurrentUser(name);
-    setIsAuthModalOpen(false);
-    setTempUsername('');
-  };
 
   const handleLogout = () => {
     localStorage.removeItem('app_username');
@@ -340,6 +332,7 @@ export default function FishingModulePage() {
         </div>
       )}
 
+      {/* Sıkışma Önleyici Header ve Profil */}
       <header className="h-14 sm:h-16 border-b border-cyan-900/30 bg-[#030712]/95 backdrop-blur-xl px-2 sm:px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl gap-1">
         <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
           <button 
@@ -402,48 +395,12 @@ export default function FishingModulePage() {
         </div>
       </header>
 
-      {isAuthModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
-          <div className="bg-[#030712] border border-cyan-500/50 w-full max-w-sm rounded-2xl p-6 relative shadow-2xl text-white space-y-4">
-            <div className="text-center space-y-1">
-              <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto text-cyan-400 mb-2">
-                <User className="w-6 h-6" />
-              </div>
-              <h2 className="text-lg font-bold">Avcı Kimliği Gerekiyor</h2>
-              <p className="text-xs text-slate-400">Rapor ve yorum paylaşabilmek için lütfen bir rumuz (isim) belirleyin.</p>
-            </div>
-
-            <form onSubmit={handleLoginSubmit} className="space-y-3">
-              <div>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="Örn: BoğazKurdu"
-                  value={tempUsername}
-                  onChange={(e) => setTempUsername(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-cyan-500 font-medium text-center"
-                  maxLength={20}
-                />
-              </div>
-              <div className="flex gap-2 pt-1">
-                <button 
-                  type="button"
-                  onClick={() => setIsAuthModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
-                >
-                  İptal
-                </button>
-                <button 
-                  type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold text-xs uppercase shadow-lg shadow-cyan-600/30"
-                >
-                  Tamam
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Şifreli Giriş/Kayıt Modalı */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+        onLogin={(name) => setCurrentUser(name)} 
+      />
 
       <div className="flex lg:hidden bg-slate-950 border-b border-cyan-900/40 p-1.5 shrink-0 z-40 justify-around text-xs font-bold">
         <button
