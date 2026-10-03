@@ -332,7 +332,7 @@ export default function FishingModulePage() {
         </div>
       )}
 
-      {/* Sıkışma Önleyici Header ve Profil */}
+      {/* En Üst Header Bölümü (Özel Logo Görseli Eklendi) */}
       <header className="h-14 sm:h-16 border-b border-cyan-900/30 bg-[#030712]/95 backdrop-blur-xl px-2 sm:px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl gap-1">
         <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
           <button 
@@ -344,9 +344,9 @@ export default function FishingModulePage() {
           </button>
           
           <div className="flex items-center gap-1.5 min-w-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-400 p-0.5 shadow-md flex items-center justify-center shrink-0">
-              <div className="w-full h-full bg-[#030712] rounded-[10px] flex items-center justify-center">
-                <Fish className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" />
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-400 p-0.5 shadow-md flex items-center justify-center shrink-0 overflow-hidden">
+              <div className="w-full h-full bg-[#030712] rounded-[10px] flex items-center justify-center overflow-hidden">
+                <img src="/logo-icon.jpg" alt="Logo" className="w-full h-full object-cover" />
               </div>
             </div>
             <div className="min-w-0">
@@ -396,12 +396,12 @@ export default function FishingModulePage() {
       </header>
 
       {/* Şifreli Giriş/Kayıt Modalı */}
-<AuthModal 
-  isOpen={isAuthModalOpen} 
-  onClose={() => setIsAuthModalOpen(false)} 
-  onLogin={(name) => setCurrentUser(name)} 
-  theme="fishing"
-/>
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+        onLogin={(name) => setCurrentUser(name)} 
+        theme="fishing"
+      />
 
       <div className="flex lg:hidden bg-slate-950 border-b border-cyan-900/40 p-1.5 shrink-0 z-40 justify-around text-xs font-bold">
         <button
@@ -637,24 +637,6 @@ export default function FishingModulePage() {
                     ))
                   )}
                 </div>
-
-		<div className="flex items-center gap-1.5 min-w-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-400 p-0.5 shadow-md flex items-center justify-		center shrink-0 overflow-hidden">
-              <div className="w-full h-full bg-[#030712] rounded-[10px] flex items-center justify-center overflow-hidden">
-                <img src="/logo-icon.jpg" alt="Logo" className="w-full h-full object-cover" />
-              </div>
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-[11px] sm:text-sm font-black tracking-wide bg-gradient-to-r from-white via-cyan-200 to-cyan-400 bg-clip-text text-transparent 		truncate">
-                BALIKÇILIK
-              </h1>
-              <p className="text-[8px] sm:text-[9px] text-cyan-500/80 font-medium tracking-wider uppercase hidden sm:block">Bildirim Platformu</p>
-            </div>
-          </div>
-
-
-
-
 
                 <div className="flex gap-2">
                   <input 
