@@ -625,6 +625,20 @@ export default function MushroomModulePage() {
                   )}
                 </div>
 
+<div className="flex items-center gap-1.5 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-400 p-0.5 shadow-md flex items-center justify-center shrink-0 overflow-hidden">
+              <div className="w-full h-full bg-[#030712] rounded-[10px] flex items-center justify-center overflow-hidden">
+                <img src="/logo-icon.jpg" alt="Logo" className="w-full h-full object-cover" />
+              </div>
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-[11px] sm:text-sm font-black tracking-wide bg-gradient-to-r from-white via-cyan-200 to-cyan-400 bg-clip-text text-transparent truncate">
+                BALIKÇILIK
+              </h1>
+              <p className="text-[8px] sm:text-[9px] text-cyan-500/80 font-medium tracking-wider uppercase hidden sm:block">Bildirim Platformu</p>
+            </div>
+          </div>
+
                 <div className="flex gap-2">
                   <input 
                     type="text" 
