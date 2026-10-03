@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User, Sparkles } from 'lucide-react';
+import { User } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
+  onClose: () => void;
   onLogin: (username: string) => void;
 }
 
-export default function AuthModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void; onLogin: (name: string) => void }) {
+export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) {
   const [username, setUsername] = useState('');
 
   if (!isOpen) return null;
@@ -45,12 +46,21 @@ export default function AuthModal({ isOpen, onClose }: { isOpen: boolean; onClos
               maxLength={20}
             />
           </div>
-          <button 
-            type="submit"
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-cyan-600/30 transition-all cursor-pointer"
-          >
-            Sisteme Giriş Yap
-          </button>
+          <div className="flex gap-2 pt-1">
+            <button 
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+            >
+              İptal
+            </button>
+            <button 
+              type="submit"
+              className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold text-xs uppercase shadow-lg shadow-cyan-600/30 cursor-pointer"
+            >
+              Tamam
+            </button>
+          </div>
         </form>
       </div>
     </div>
