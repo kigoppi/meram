@@ -90,13 +90,13 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
-      <div className="bg-[#030712] border border-cyan-500/50 w-full max-w-sm rounded-2xl p-6 relative shadow-2xl text-white space-y-4">
+      <div className="bg-[#1c140d] border border-amber-700/50 w-full max-w-sm rounded-2xl p-6 relative shadow-2xl text-[#f4eee6] space-y-4">
         <div className="text-center space-y-1">
-          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto text-cyan-400 mb-2">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-500 mb-2">
             <KeyRound className="w-6 h-6" />
           </div>
           <h2 className="text-lg font-bold">{isRegister ? 'Yeni Avcı Kaydı' : 'Avcı Girişi'}</h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-[#a8998e]">
             {isRegister ? 'Benzersiz bir kullanıcı adı ve şifre belirleyin.' : 'Kayıtlı bilgilerinizle giriş yapın.'}
           </p>
         </div>
@@ -104,14 +104,14 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <div className="relative">
-              <User className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
+              <User className="w-4 h-4 text-[#a8998e] absolute left-3 top-3.5" />
               <input 
                 type="text" 
                 required
                 placeholder="Kullanıcı Adı"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3.5 py-3 text-sm text-white focus:outline-none focus:border-cyan-500 font-medium"
+                className="w-full bg-[#16110e] border border-[#32261e] rounded-xl pl-10 pr-3.5 py-3 text-sm text-white focus:outline-none focus:border-amber-600 font-medium"
                 maxLength={20}
               />
             </div>
@@ -119,14 +119,14 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
 
           <div>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
+              <Lock className="w-4 h-4 text-[#a8998e] absolute left-3 top-3.5" />
               <input 
                 type="password" 
                 required
                 placeholder="Şifre"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3.5 py-3 text-sm text-white focus:outline-none focus:border-cyan-500 font-medium"
+                className="w-full bg-[#16110e] border border-[#32261e] rounded-xl pl-10 pr-3.5 py-3 text-sm text-white focus:outline-none focus:border-amber-600 font-medium"
               />
             </div>
           </div>
@@ -140,24 +140,24 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
           <button 
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-cyan-600/30 transition-all cursor-pointer disabled:opacity-50"
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-700 via-yellow-800 to-emerald-800 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-amber-950/50 transition-all cursor-pointer disabled:opacity-50"
           >
             {loading ? 'İşleniyor...' : (isRegister ? 'Kayıt Ol ve Giriş Yap' : 'Giriş Yap')}
           </button>
         </form>
 
-        <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
+        <div className="flex items-center justify-between pt-2 border-t border-[#32261e] text-xs">
           <button 
             type="button"
             onClick={() => { setIsRegister(!isRegister); setErrorMsg(''); }}
-            className="text-cyan-400 hover:underline font-medium cursor-pointer"
+            className="text-amber-400 hover:underline font-medium cursor-pointer"
           >
             {isRegister ? 'Zaten hesabın var mı? Giriş yap' : 'Hesabın yok mu? Kayıt ol'}
           </button>
           <button 
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white cursor-pointer"
+            className="text-[#a8998e] hover:text-white cursor-pointer"
           >
             İptal
           </button>
