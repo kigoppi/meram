@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Fish, Compass, ArrowRight, Sparkles, Waves, Trees } from 'lucide-react';
+import { Fish, Compass, ArrowRight, Waves, Trees } from 'lucide-react';
 
 export default function HomePage() {
   const router = useRouter();
@@ -10,11 +10,14 @@ export default function HomePage() {
   return (
     <div className="min-h-screen w-screen bg-[#030712] text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 selection:bg-cyan-500 selection:text-black">
       
-      {/* Üst Başlık */}
+      {/* Üst Başlık ve Logo */}
       <div className="text-center space-y-3 mb-8 sm:mb-12 max-w-xl">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950 border border-slate-800 text-cyan-400 text-xs font-semibold tracking-wider uppercase mb-2 shadow-md">
-          <Sparkles className="w-3.5 h-3.5 animate-pulse text-cyan-400" />
-          <span>Paylaşım Platformu</span>
+        <div className="w-24 h-24 sm:w-28 sm:h-28 mx-auto rounded-3xl overflow-hidden shadow-2xl shadow-cyan-950/50 border border-cyan-500/30 bg-slate-900/80 p-1 mb-1">
+          <img 
+            src="/fishmush.png" 
+            alt="Fishmush Logo" 
+            className="w-full h-full object-cover rounded-2xl"
+          />
         </div>
         <h1 className="text-2xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-white via-slate-200 to-cyan-400 bg-clip-text text-transparent">
           FİSHMUSH
@@ -32,7 +35,7 @@ export default function HomePage() {
           onClick={() => router.push('/fishing')}
           className="group relative bg-[#0b1329] border border-cyan-500/40 hover:border-cyan-400 rounded-3xl p-6 sm:p-8 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-950/80 hover:-translate-y-1 flex flex-col justify-between overflow-hidden"
         >
-          {/* Arka Plan Görseli (Daha Belirgin Opaklık: %55 -> %70) */}
+          {/* Arka Plan Görseli */}
           <div className="absolute inset-0 z-0 opacity-55 group-hover:opacity-70 transition-opacity duration-500">
             <img 
               src="/images/fishing-bg.jpg" 
@@ -75,10 +78,10 @@ export default function HomePage() {
 
         {/* SAĞ TARAF: Mantarcılık */}
         <div 
-          onClick={() => router.push('/mushrooms')}
+          onClick={() => router.push('/mushroom')}
           className="group relative bg-[#1c140d] border border-amber-700/50 hover:border-amber-500 rounded-3xl p-6 sm:p-8 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-amber-950/80 hover:-translate-y-1 flex flex-col justify-between overflow-hidden"
         >
-          {/* Arka Plan Görseli (Daha Belirgin Opaklık: %55 -> %70) */}
+          {/* Arka Plan Görseli */}
           <div className="absolute inset-0 z-0 opacity-55 group-hover:opacity-70 transition-opacity duration-500">
             <img 
               src="/images/mushroom-bg.jpg" 
