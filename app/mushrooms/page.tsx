@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { 
   Trees, MapPin, ThumbsUp, ThumbsDown, Plus, 
-  Compass, ArrowLeft, X, Clock, Sparkles, Waves, Info, User, LogOut, MessageSquare
+  Compass, Home, X, Clock, Sparkles, Waves, Info, User, LogOut, MessageSquare
 } from 'lucide-react';
 import AddMushroomReportModal from '@/components/reports/AddMushroomReportModal';
 import AuthModal from '@/components/auth/AuthModal';
@@ -59,11 +59,9 @@ export default function MushroomModulePage() {
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
 
-  // Kullanıcı Girişi State'leri
   const [currentUser, setCurrentUser] = useState<string>('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // Yorumlar State'leri
   const [comments, setComments] = useState<any[]>([]);
   const [newCommentText, setNewCommentText] = useState('');
 
@@ -331,32 +329,36 @@ export default function MushroomModulePage() {
         </div>
       )}
 
-      {/* Sıkışma Önleyici Header ve Özel Logo Görseli */}
-      <header className="h-14 sm:h-16 border-b border-[#32261e] bg-[#1c140d]/95 backdrop-blur-xl px-2 sm:px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl gap-1">
-        <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
+      {/* Header (Sol: Home, Orta: Logo + Mantar Avı, Sağ: Kullanıcı & Rapor Ekle) */}
+      <header className="h-14 sm:h-16 border-b border-[#32261e] bg-[#1c140d]/95 backdrop-blur-xl px-2 sm:px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl gap-2">
+        
+        {/* Sol: Home Butonu */}
+        <div className="flex items-center shrink-0">
           <button 
             onClick={() => router.push('/')}
-            className="group px-2 py-1.5 rounded-xl bg-[#261d15] hover:bg-[#36291e] border border-[#3d2e24] hover:border-amber-700/50 text-[#d4c5b9] hover:text-amber-400 transition-all flex items-center gap-1 text-[11px] sm:text-xs font-semibold cursor-pointer shadow-md shrink-0"
+            className="p-2 rounded-xl bg-[#261d15] hover:bg-[#36291e] border border-[#3d2e24] hover:border-amber-700/50 text-[#d4c5b9] hover:text-amber-400 transition-all cursor-pointer shadow-md"
+            title="Anasayfa"
           >
-            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-            <span className="hidden xs:inline">Anasayfa</span>
+            <Home className="w-4 h-4" />
           </button>
-          
-          <div className="flex items-center gap-1.5 min-w-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-amber-700 via-emerald-800 to-stone-700 p-0.5 shadow-md flex items-center justify-center shrink-0 overflow-hidden">
-              <div className="w-full h-full bg-[#16110e] rounded-[10px] flex items-center justify-center overflow-hidden">
-                <img src="/logo-icon.jpg" alt="Logo" className="w-full h-full object-cover" />
-              </div>
+        </div>
+
+        {/* Orta: Logo ve Başlık */}
+        <div className="flex items-center gap-2 min-w-0 justify-center flex-1">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-amber-700 via-emerald-800 to-stone-700 p-0.5 shadow-md flex items-center justify-center shrink-0 overflow-hidden">
+            <div className="w-full h-full bg-[#16110e] rounded-[10px] flex items-center justify-center overflow-hidden">
+              <img src="/logo-icon.jpg" alt="Logo" className="w-full h-full object-cover" />
             </div>
-            <div className="min-w-0">
-              <h1 className="text-[11px] sm:text-sm font-black tracking-wide bg-gradient-to-r from-[#f4eee6] via-amber-200 to-amber-500 bg-clip-text text-transparent truncate">
-                MANTAR AVI
-              </h1>
-              <p className="text-[8px] sm:text-[9px] text-amber-600/90 font-medium tracking-wider uppercase hidden sm:block">Bildirim Platformu</p>
-            </div>
+          </div>
+          <div className="min-w-0 text-center sm:text-left">
+            <h1 className="text-[11px] sm:text-sm font-black tracking-wide bg-gradient-to-r from-[#f4eee6] via-amber-200 to-amber-500 bg-clip-text text-transparent truncate">
+              MANTAR AVI
+            </h1>
+            <p className="text-[8px] sm:text-[9px] text-amber-600/90 font-medium tracking-wider uppercase hidden sm:block">Bildirim Platformu</p>
           </div>
         </div>
 
+        {/* Sağ: Kullanıcı ve Rapor Ekle */}
         <div className="flex items-center gap-1.5 shrink-0">
           {currentUser ? (
             <div className="flex items-center gap-1 bg-[#261d15] border border-amber-600/40 px-2 py-1 rounded-xl text-[11px]">
@@ -394,7 +396,6 @@ export default function MushroomModulePage() {
         </div>
       </header>
 
-      {/* Şifreli Giriş/Kayıt Modalı (Mantar Teması) */}
       <AuthModal 
         isOpen={isAuthModalOpen} 
         onClose={() => setIsAuthModalOpen(false)} 
