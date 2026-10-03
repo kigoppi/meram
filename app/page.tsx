@@ -78,7 +78,7 @@ export default function HomePage() {
 
         {/* SAĞ TARAF: Mantarcılık */}
         <div 
-          onClick={() => router.push('/mushroom')}
+          onClick={() => router.push('/mushrooms')}
           className="group relative bg-[#1c140d] border border-amber-700/50 hover:border-amber-500 rounded-3xl p-6 sm:p-8 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-amber-950/80 hover:-translate-y-1 flex flex-col justify-between overflow-hidden"
         >
           {/* Arka Plan Görseli */}
