@@ -10,9 +10,9 @@ export default function HomePage() {
   return (
     <div className="min-h-screen w-screen bg-[#030712] text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 selection:bg-cyan-500 selection:text-black">
       
-      {/* Üst Başlık ve Logo */}
+      {/* Üst Başlık ve Büyütülmüş Logo */}
       <div className="text-center space-y-3 mb-8 sm:mb-12 max-w-xl">
-        <div className="w-24 h-24 sm:w-28 sm:h-28 mx-auto rounded-3xl overflow-hidden shadow-2xl shadow-cyan-950/50 border border-cyan-500/30 bg-slate-900/80 p-1 mb-1">
+        <div className="w-32 h-32 sm:w-36 sm:h-36 mx-auto rounded-3xl overflow-hidden shadow-2xl shadow-cyan-950/60 border border-cyan-500/40 bg-slate-900/80 p-1.5 mb-2 transition-transform duration-300 hover:scale-105">
           <img 
             src="/fishmush.png" 
             alt="Fishmush Logo" 
