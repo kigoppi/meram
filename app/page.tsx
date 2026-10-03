@@ -12,7 +12,7 @@ export default function HomePage() {
       
       {/* Üst Başlık ve Büyütülüp Yazıya Yaklaştırılmış Logo */}
       <div className="text-center mb-8 sm:mb-12 max-w-xl">
-        <div className="w-40 h-40 sm:w-48 sm:h-48 mx-auto flex items-center justify-center -mb-6">
+        <div className="w-44 h-44 sm:w-52 sm:h-52 mx-auto flex items-center justify-center -mb-6">
           <img 
             src="/fishmush.png" 
             alt="Fishmush Logo" 
