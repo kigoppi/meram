@@ -10,6 +10,9 @@ interface AuthModalProps {
   onLogin: (username: string) => void;
 }
 
+// Yasaklı kullanıcı adı kelimeleri
+const FORBIDDEN_NAMES = ['admin', 'yonetici', 'yönetici', 'moderator', 'moderatör', 'root', 'sahip', 'owner', 'sistem'];
+
 export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) {
   const [isRegister, setIsRegister] = useState(false);
   const [username, setUsername] = useState('');
@@ -24,7 +27,15 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
     setErrorMsg('');
     if (!username.trim() || !password.trim()) return;
 
-    const cleanUser = username.trim();
+    const cleanUser = username.trim().toLowerCase();
+
+    // Sahiplik/Yetki içeren kelime kontrolü
+    const isForbidden = FORBIDDEN_NAMES.some(forbidden => cleanUser.includes(forbidden));
+    if (isRegister && isForbidden) {
+      setErrorMsg('Bu kullanıcı adı (admin, yönetici vb.) sistem tarafından yasaklanmıştır.');
+      return;
+    }
+
     setLoading(true);
 
     try {
