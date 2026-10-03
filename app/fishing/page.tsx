@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { 
   Fish, MapPin, ThumbsUp, ThumbsDown, Plus, 
-  Compass, ArrowLeft, X, Clock, Sparkles, Waves, Info 
+  Compass, ArrowLeft, X, Clock, Sparkles, Waves, Info, User, LogOut
 } from 'lucide-react';
 import AddReportModal from '@/components/reports/AddReportModal';
 import { supabase } from '@/lib/supabase';
@@ -58,11 +58,21 @@ export default function FishingModulePage() {
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
 
-  // Yorumlar için state'ler
+  // Kullanıcı Girişi State'leri
+  const [currentUser, setCurrentUser] = useState<string>('');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [tempUsername, setTempUsername] = useState('');
+
+  // Yorumlar State'leri
   const [comments, setComments] = useState<any[]>([]);
   const [newCommentText, setNewCommentText] = useState('');
 
   useEffect(() => {
+    const savedUser = localStorage.getItem('app_username');
+    if (savedUser) {
+      setCurrentUser(savedUser);
+    }
+
     fetchReportsFromSupabase();
 
     const channel = supabase
@@ -77,7 +87,6 @@ export default function FishingModulePage() {
     };
   }, []);
 
-  // Rapor detay modalı açıldığında yorumları çek
   useEffect(() => {
     if (activeDetailReport) {
       fetchComments(activeDetailReport.id, 'fishing_report_comments');
@@ -85,6 +94,31 @@ export default function FishingModulePage() {
       setComments([]);
     }
   }, [activeDetailReport]);
+
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tempUsername.trim()) return;
+    const name = tempUsername.trim();
+    localStorage.setItem('app_username', name);
+    setCurrentUser(name);
+    setIsAuthModalOpen(false);
+    setTempUsername('');
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('app_username');
+    setCurrentUser('');
+  };
+
+  const requireAuth = (actionCallback: () => void) => {
+    const savedUser = localStorage.getItem('app_username');
+    if (!savedUser) {
+      setIsAuthModalOpen(true);
+    } else {
+      setCurrentUser(savedUser);
+      actionCallback();
+    }
+  };
 
   const fetchComments = async (reportId: string, tableName: string) => {
     const { data, error } = await supabase
@@ -101,9 +135,14 @@ export default function FishingModulePage() {
   const handleAddComment = async (tableName: string) => {
     if (!newCommentText.trim() || !activeDetailReport) return;
 
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
     const payload = {
       report_id: activeDetailReport.id,
-      author: 'Gezgin Avcı',
+      author: currentUser,
       content: newCommentText.trim(),
       created_at: Date.now()
     };
@@ -111,7 +150,7 @@ export default function FishingModulePage() {
     const { error } = await supabase.from(tableName).insert([payload]);
 
     if (error) {
-      console.error('Yorum eklenemedi:', error);
+      console.error('Yorum eklenemedi:', error.message);
       return;
     }
 
@@ -136,7 +175,7 @@ export default function FishingModulePage() {
         id: item.id,
         title: item.title,
         locationName: item.location_name,
-        author: item.author,
+        author: item.author || 'Gezgin Avcı',
         trustScore: item.trust_score,
         content: item.content,
         upvotes: item.upvotes,
@@ -193,7 +232,7 @@ export default function FishingModulePage() {
       id: newReport.id,
       title: newReport.title,
       location_name: newReport.locationName,
-      author: 'Gezgin Avcı',
+      author: currentUser || 'Gezgin Avcı',
       trust_score: newReport.trustScore || 80,
       content: newReport.content,
       upvotes: newReport.upvotes || 0,
@@ -278,7 +317,7 @@ export default function FishingModulePage() {
         </div>
       )}
 
-      {/* Mobil Sıkışma Önleyici Optimize Edilmiş Header */}
+      {/* Sıkışma Önleyici Optimize Header & Profil Göstergesi */}
       <header className="h-14 sm:h-16 border-b border-cyan-900/30 bg-[#030712]/95 backdrop-blur-xl px-2 sm:px-6 flex items-center justify-between shrink-0 z-50 shadow-2xl gap-1">
         <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
           <button 
@@ -305,6 +344,23 @@ export default function FishingModulePage() {
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          {currentUser ? (
+            <div className="flex items-center gap-1 bg-slate-900 border border-cyan-500/30 px-2 py-1 rounded-xl text-[11px]">
+              <span className="text-cyan-400 font-bold truncate max-w-[80px] sm:max-w-[120px]">{currentUser}</span>
+              <button onClick={handleLogout} className="text-slate-400 hover:text-rose-400 p-1 transition-colors" title="Çıkış Yap">
+                <LogOut className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={() => setIsAuthModalOpen(true)}
+              className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 text-xs font-bold transition-colors border border-cyan-500/30 flex items-center gap-1"
+            >
+              <User className="w-3.5 h-3.5" />
+              <span className="hidden xs:inline">Giriş Yap</span>
+            </button>
+          )}
+
           <button 
             onClick={() => setIsInfoModalOpen(true)}
             className="p-2 rounded-xl bg-slate-900/80 hover:bg-cyan-950/50 border border-slate-800 text-cyan-400 transition-colors cursor-pointer shadow-md"
@@ -314,7 +370,7 @@ export default function FishingModulePage() {
           </button>
 
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => requireAuth(() => setIsModalOpen(true))}
             className="group relative px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-500 text-white font-bold text-[11px] sm:text-xs uppercase tracking-wider flex items-center gap-1 shadow-lg shadow-cyan-600/35 transition-all cursor-pointer border border-cyan-400/30 active:scale-95 shrink-0"
           >
             <Plus className="w-3.5 h-3.5 transition-transform group-hover:rotate-90 duration-300" />
@@ -323,6 +379,50 @@ export default function FishingModulePage() {
           </button>
         </div>
       </header>
+
+      {/* Kullanıcı Giriş Modalı */}
+      {isAuthModalOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+          <div className="bg-[#030712] border border-cyan-500/50 w-full max-w-sm rounded-2xl p-6 relative shadow-2xl text-white space-y-4">
+            <div className="text-center space-y-1">
+              <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto text-cyan-400 mb-2">
+                <User className="w-6 h-6" />
+              </div>
+              <h2 className="text-lg font-bold">Avcı Kimliği Gerekiyor</h2>
+              <p className="text-xs text-slate-400">Rapor ve yorum paylaşabilmek için lütfen bir rumuz (isim) belirleyin.</p>
+            </div>
+
+            <form onSubmit={handleLoginSubmit} className="space-y-3">
+              <div>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="Örn: BoğazKurdu"
+                  value={tempUsername}
+                  onChange={(e) => setTempUsername(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-cyan-500 font-medium text-center"
+                  maxLength={20}
+                />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button 
+                  type="button"
+                  onClick={() => setIsAuthModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+                >
+                  İptal
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold text-xs uppercase shadow-lg shadow-cyan-600/3ony"
+                >
+                  Tamam
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="flex lg:hidden bg-slate-950 border-b border-cyan-900/40 p-1.5 shrink-0 z-40 justify-around text-xs font-bold">
         <button
@@ -558,7 +658,7 @@ export default function FishingModulePage() {
                   />
                   <button 
                     type="button"
-                    onClick={() => handleAddComment('fishing_report_comments')}
+                    onClick={() => requireAuth(() => handleAddComment('fishing_report_comments'))}
                     className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs transition-colors cursor-pointer shrink-0 shadow-md"
                   >
                     Gönder
