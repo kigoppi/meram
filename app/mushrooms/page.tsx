@@ -395,12 +395,12 @@ export default function MushroomModulePage() {
       </header>
 
       {/* Şifreli Giriş/Kayıt Modalı */}
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-        onLogin={(name) => setCurrentUser(name)} 
-      />
-
+<AuthModal 
+  isOpen={isAuthModalOpen} 
+  onClose={() => setIsAuthModalOpen(false)} 
+  onLogin={(name) => setCurrentUser(name)} 
+  theme="mushroom"
+/>
       <div className="flex lg:hidden bg-[#1c140d] border-b border-[#32261e] p-1.5 shrink-0 z-40 justify-around text-xs font-bold">
         <button
           onClick={() => setMobileTab('latest')}

@@ -396,11 +396,12 @@ export default function FishingModulePage() {
       </header>
 
       {/* Şifreli Giriş/Kayıt Modalı */}
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-        onLogin={(name) => setCurrentUser(name)} 
-      />
+<AuthModal 
+  isOpen={isAuthModalOpen} 
+  onClose={() => setIsAuthModalOpen(false)} 
+  onLogin={(name) => setCurrentUser(name)} 
+  theme="fishing"
+/>
 
       <div className="flex lg:hidden bg-slate-950 border-b border-cyan-900/40 p-1.5 shrink-0 z-40 justify-around text-xs font-bold">
         <button
